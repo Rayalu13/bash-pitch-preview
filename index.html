@@ -18,10 +18,32 @@
         var vp = document.querySelector('meta[name="viewport"]');
         if (vp) vp.setAttribute('content',
           'width=' + DESIGN + ', initial-scale=' + (minSide / DESIGN).toFixed(4) + ', user-scalable=yes');
+        document.documentElement.classList.add('mfit');
       }
     } catch (e) {}
   })();
 </script>
+<style>
+  /* Mobile: vertical-scroll filmstrip. The head script forces a desktop-width
+     viewport (so the deck renders at its designed size and the phone scales it
+     to fit the width) and adds .mfit. Here we drop the one-slide-overlay model
+     and stack slides vertically so the user simply scrolls — full-width slides,
+     no wasted space, no tiny nav. */
+  html.mfit, html.mfit body { height: auto; overflow-x: hidden; overflow-y: auto; }
+  html.mfit .deck { position: static; height: auto; overflow: visible; display: block; }
+  html.mfit .slide {
+    position: relative; inset: auto;
+    opacity: 1; pointer-events: auto;
+    height: auto; min-height: 768px;       /* fixed px — vh balloons under forced-width viewport */
+    border-bottom: 1px solid var(--rule);
+  }
+  html.mfit .slide:not(.active) * { pointer-events: auto !important; }
+  html.mfit .nav, html.mfit .hint { display: none !important; }
+  /* phone mockups use calc(100vh - Npx); pin them so they don't balloon */
+  html.mfit .mini-phone, html.mfit .demo-phone, html.mfit .phone {
+    height: auto; aspect-ratio: 9 / 19; max-height: 620px;
+  }
+</style>
 <title>Bash - Investor Pitch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
