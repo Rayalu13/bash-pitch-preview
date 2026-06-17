@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+</head>
+<body>
+<div class="device">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">II · Insights</div>
+    <h1>This week at <span class="accent">Bandra Social</span>.</h1>
+    <p class="deck">Apr 28 – May 4 · refreshed 6 min ago.</p>
+  </section>
+
+  <!-- THE WEEK IN THREE LINES -->
+  <p class="lead reveal">
+    <strong>1,247 guests visited this week</strong> — <em>188 more</em> than last week.<br/>
+    <strong>Friday's EDM Night</strong> was your biggest night with <em>412 guests</em>.<br/>
+    <strong>Tuesday and Wednesday were quiet</strong> — about a third fewer guests than your busy nights.
+    <a href="plays.html">See ways to fix this</a>
+  </p>
+
+  <!-- REVENUE -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Revenue this week</div>
+      <div class="meta">Before tax + tips</div>
+    </div>
+    <div style="display:flex; align-items:baseline; gap: var(--space-3);">
+      <div style="font-family: var(--display); font-weight:600; font-size: 44px; letter-spacing: -0.02em; color: var(--orange);">₹4.2 L</div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--positive); letter-spacing: 0.04em;">↑ ₹70,000 wk/wk</div>
+    </div>
+    <div style="margin-top: var(--space-4); display: flex; flex-direction: column; gap: 10px;">
+      <div style="display:flex; justify-content:space-between; font-family: var(--display); font-size: 14px;"><span style="color: var(--ink-2);">Avg spend / guest</span><span>₹1,840 <span style="color: var(--positive); font-family: var(--mono); font-size: 10px;">↑ ₹120</span></span></div>
+      <div style="display:flex; justify-content:space-between; font-family: var(--display); font-size: 14px;"><span style="color: var(--ink-2);">Recorded via waiters</span><span>₹3.4 L</span></div>
+      <div style="display:flex; justify-content:space-between; font-family: var(--display); font-size: 14px;"><span style="color: var(--ink-2);">Nights you closed in Bash</span><span style="color: var(--orange);">4 of 7</span></div>
+    </div>
+    <p class="caption">The more nights you enter your end-of-day total, the tighter this number gets. <span class="em">Three nights are still ₹0.</span></p>
+
+    <!-- Close yesterday's books — direct entry -->
+    <div class="do-card" data-do="close-books">
+      <div class="do-head">
+        <div class="do-label">Close yesterday's books</div>
+        <div class="do-sub">Wednesday 22 May · ₹0 entered</div>
+      </div>
+      <div class="do-row">
+        <div class="do-input">
+          <span class="cur">₹</span>
+          <input type="text" inputmode="numeric" placeholder="Enter total" aria-label="Yesterday's end-of-day total" />
+        </div>
+        <button class="do-btn primary" type="button">Close</button>
+      </div>
+      <div class="done-msg">Closed. Wednesday 22 May locked.</div>
+    </div>
+
+    <!-- Log Friday's event — direct entry with pre-filled fields -->
+    <div class="do-card" data-do="log-event">
+      <div class="do-head">
+        <div class="do-title">
+          <div class="do-label">Log Friday's EDM Night event</div>
+          <div class="do-sub">412 guests · auto-detected from guest register</div>
+        </div>
+        <button class="ai-pill" type="button" id="askBashEventRevenue">Ask Bash</button>
+      </div>
+      <div class="do-fields">
+        <div class="field full">
+          <label>Event name</label>
+          <input type="text" value="EDM Night" />
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <div class="v">Fri 02 May</div>
+        </div>
+        <div class="field">
+          <label>Guests</label>
+          <input type="text" value="412" />
+        </div>
+        <div class="field">
+          <label>Cover charge</label>
+          <input type="text" placeholder="₹ per head" />
+        </div>
+        <div class="field">
+          <label>Headliner</label>
+          <input type="text" placeholder="DJ name" />
+        </div>
+      </div>
+      <div class="do-cta">
+        <button class="do-btn primary" type="button">Log event</button>
+        <button class="do-btn" type="button">Save draft</button>
+      </div>
+      <div class="done-msg">Event logged. Appears in Events recap below.</div>
+    </div>
+  </section>
+
+  <!-- WHAT SOLD -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">What sold</div>
+      <div class="meta">Top 8 · this wk</div>
+    </div>
+    <div style="font-family: var(--display);">
+      <div class="row"><div class="l">Old Fashioned <span class="sub">Cocktails · ₹620</span></div><div class="r" style="color: var(--positive);">↑ 18% · 142 sold</div></div>
+      <div class="row"><div class="l">Truffle Fries <span class="sub">Bar bites · ₹420</span></div><div class="r" style="color: var(--positive);">↑ 12% · 118</div></div>
+      <div class="row"><div class="l">Negroni <span class="sub">Cocktails · ₹580</span></div><div class="r">— 4% · 96</div></div>
+      <div class="row"><div class="l">Margherita <span class="sub">Food · ₹490</span></div><div class="r">— · 88</div></div>
+      <div class="row"><div class="l">Paloma <span class="sub">Cocktails · ₹560</span></div><div class="r" style="color: var(--orange);">↓ 22% · 41</div></div>
+      <div class="row"><div class="l">Tiramisu <span class="sub">Desserts · ₹320</span></div><div class="r" style="color: var(--orange);">↓ 18% · 28</div></div>
+    </div>
+    <p class="caption"><span class="em">Old Fashioned</span> climbed again. <span class="em">Paloma and Tiramisu slipped</span> — worth pulling forward in the menu or seeing what changed in the recipe.</p>
+    <div class="act-row" data-prompt="Mark up Old Fashioned and Truffle Fries by 8% next week — both are climbing." style="margin-top: var(--space-3);">
+      <div class="glyph">→</div>
+      <div class="text">Mark up <em>climbing items</em> 8% next week.</div>
+      <div class="arr">›</div>
+    </div>
+  </section>
+
+  <!-- EVENTS RECAP -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Events this week</div>
+      <div class="meta">3 events</div>
+    </div>
+    <div class="data-table-wrap" style="margin: 0; max-height: none;">
+      <table class="data-table">
+        <thead><tr><th class="first">When</th><th>Event</th><th class="num">Guests</th><th class="num last">vs avg</th></tr></thead>
+        <tbody>
+          <tr><td class="date first">Fri 02 May</td><td class="name">EDM Night</td><td class="num">412</td><td class="num last" style="color: var(--positive);">2.1×</td></tr>
+          <tr><td class="date first">Sat 03 May</td><td class="name">DJ Aman live</td><td class="num">198</td><td class="num last">1.0×</td></tr>
+          <tr><td class="date first">Sun 04 May</td><td class="name">Sunday Brunch</td><td class="num">99</td><td class="num last" style="color: var(--orange);">0.5×</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">EDM Night doubled an average Friday. <span class="em">Brunch underperformed</span> — the poster expired Thursday (see Brief → Needs you).</p>
+  </section>
+
+  <!-- TRENDS WORTH YOUR ATTENTION -->
+  <section class="trends reveal">
+    <div class="sec-head">
+      <div class="label">Trends worth your attention</div>
+      <div class="badge">4 trends</div>
+    </div>
+    <p class="trends-deck">Four items moved sharply this week. Each one has a one-click action.</p>
+
+    <div class="trend-row">
+      <div class="trend-arrow up">↑</div>
+      <div class="trend-body">
+        <div class="trend-head"><strong>Negroni</strong> is selling <span class="up">28% more</span> than usual</div>
+        <div class="trend-desc">Promote it on WhatsApp while it's hot — your regulars will respond.</div>
+      </div>
+      <button class="trend-btn primary" data-prompt="Send a WhatsApp blast to my regulars about the Negroni — sales are up 28% this week.">Promote on WhatsApp</button>
+    </div>
+
+    <div class="trend-row">
+      <div class="trend-arrow up">↑</div>
+      <div class="trend-body">
+        <div class="trend-head"><strong>Tiramisu</strong> is selling <span class="up">18% more</span> than usual</div>
+        <div class="trend-desc">Good time to feature it in your menu carousel.</div>
+      </div>
+      <button class="trend-btn primary" data-prompt="Feature Tiramisu in the menu carousel — sales up 18% this week.">Promote on WhatsApp</button>
+    </div>
+
+    <div class="trend-row">
+      <div class="trend-arrow down">↓</div>
+      <div class="trend-body">
+        <div class="trend-head"><strong>Caesar Salad</strong> is selling <span class="down">42% less</span> than usual</div>
+        <div class="trend-desc">Only 12 orders this week. Consider removing it from your menu.</div>
+      </div>
+      <button class="trend-btn secondary" data-prompt="Remove Caesar Salad from the menu — only 12 orders this week, 42% below normal.">Remove from menu</button>
+    </div>
+
+    <div class="trend-row">
+      <div class="trend-arrow down">↓</div>
+      <div class="trend-body">
+        <div class="trend-head"><strong>Espresso Martini</strong> is selling <span class="down">24% less</span> than usual</div>
+        <div class="trend-desc">Down for the second week running. Worth checking with your bar team.</div>
+      </div>
+      <button class="trend-btn secondary" data-prompt="Espresso Martini is down 24% for the second week. Check with the bar team — recipe change? supplier?">Review item</button>
+    </div>
+  </section>
+
+  </div>
+<script src="_shell.js?v=ed17"></script>
+<script>
+  BashShell.mount();
+
+  // Ask Bash · event revenue — picks the current event name from the form
+  // and asks for the revenue breakdown via chat.
+  (function () {
+    const btn = document.getElementById("askBashEventRevenue");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const card = btn.closest(".do-card");
+      const inputs = card ? card.querySelectorAll(".do-fields input") : [];
+      const eventName = (inputs[0] && inputs[0].value || "this event").trim();
+      const dateEl = card && card.querySelector(".do-fields .v");
+      const date = dateEl ? dateEl.textContent.trim() : "";
+      const prompt = `How much revenue did the ${eventName} event${date ? ` on ${date}` : ""} bring in? Break it down by cover charge collected, bar sales, and food sales.`;
+      sessionStorage.setItem("bash_prefill", prompt);
+      window.location.href = "brief.html#chat";
+    });
+  })();
+</script>
+</body>
+</html>

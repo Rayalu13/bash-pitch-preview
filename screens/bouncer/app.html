@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BASH · Bouncer</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at top, #1a1a1a 0%, #050505 70%);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #fff;
+  }
+
+  /* Embed mode (loaded as ?embed=1 inside another page's iframe) */
+  html.embed { display: block; width: 100%; }
+  html.embed body { background: var(--bg, #121212); display: block; width: 100%; }
+  body.embed { background: var(--bg, #121212); display: block; width: 100%; }
+  body.embed .device {
+    width: 100%;
+    height: 100%;
+    background: var(--bg, #121212);
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  body.embed .device::before,
+  body.embed .device::after { display: none; }
+  body.embed .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  body.embed .status-bar { display: none; }
+  body.embed #app { inset: 0; }
+  body.embed .demo-hint,
+  body.embed .reset-btn { display: none; }
+
+  /* Device chrome */
+  .device {
+    position: relative;
+    width: 392px;
+    height: 832px;
+    background: linear-gradient(165deg, #2a2a2a, #0a0a0a);
+    border-radius: 48px;
+    padding: 16px;
+    box-shadow:
+      0 0 0 2px #1a1a1a,
+      0 0 0 3px #2a2a2a,
+      0 30px 80px rgba(0,0,0,0.8),
+      0 0 60px rgba(254,140,0,0.05);
+  }
+  .device::before {
+    content: '';
+    position: absolute;
+    top: 22px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 28px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 30;
+  }
+  .device::after {
+    content: '';
+    position: absolute;
+    bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 124px; height: 4px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 4px;
+    z-index: 30;
+  }
+
+  .screen {
+    width: 360px;
+    height: 800px;
+    border-radius: 36px;
+    overflow: hidden;
+    background: var(--bg);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 38px;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 26px 0 28px;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    color: #fff;
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+
+  /* viewport for screens (clears status bar at top) */
+  #app {
+    position: absolute;
+    inset: 38px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* tweak phone-internal sizing */
+  #app .topbar { flex-shrink: 0; }
+  #app .tabs { flex-shrink: 0; }
+  #app .kpi-row { flex-shrink: 0; }
+  #app .search { flex-shrink: 0; }
+  #app .scroll {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 90px; /* clear bottom nav + fab */
+  }
+  #app .scroll::-webkit-scrollbar { width: 0; height: 0; }
+  #app .bottom-nav { position: absolute; }
+  #app .fab { position: absolute; }
+
+  /* In-screen transitions */
+  .fade-in { animation: fade .15s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Bottom sheet overlay used by Create / Edit / dialog screens */
+  /* z-index must beat .bottom-nav (z-index 80) so the floating pill nav
+     doesn't render on top of the sheet's controls. */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    animation: fade .15s ease both;
+  }
+  .overlay .sheet {
+    width: 100%;
+    background: var(--bg);
+    border-radius: 24px 24px 0 0;
+    padding: 14px 20px 20px;
+    max-height: calc(92% - 90px);
+    margin-bottom: 90px; /* sit above the floating bottom-nav pill (bottom:24 + height:60 + gap) */
+    overflow-y: auto;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.4);
+    animation: slideUp .22s ease both;
+  }
+  @keyframes slideUp { from { transform: translateY(50%); } to { transform: translateY(0); } }
+  .overlay .sheet::-webkit-scrollbar { width: 0; height: 0; }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 auto 14px;
+  }
+
+  /* Confirm dialog */
+  .confirm {
+    position: absolute;
+    left: 20px; right: 20px;
+    top: 50%;
+    transform: translate(0, -50%);
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px 18px 16px;
+    z-index: 20;
+    animation: pop .18s ease both;
+  }
+  @keyframes pop { from { transform: translate(0,-50%) scale(0.92); opacity: 0; } to { transform: translate(0,-50%) scale(1); opacity: 1; } }
+  .confirm h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .confirm p  { margin: 0 0 16px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .confirm .row { display: flex; gap: 10px; }
+  .confirm .row a { flex: 1; }
+
+  /* Toast */
+  .toast-host {
+    position: absolute;
+    left: 16px; right: 16px;
+    bottom: 80px;
+    z-index: 25;
+    pointer-events: none;
+  }
+  .toast-host .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(46,204,113,0.18);
+    border: 1px solid rgba(46,204,113,0.5);
+    color: #b8ffd0;
+    font-size: 13px;
+    font-weight: 500;
+    animation: toastIn .25s ease both;
+    backdrop-filter: blur(6px);
+  }
+  .toast-host .toast.err {
+    background: rgba(233,14,4,0.18);
+    border-color: rgba(233,14,4,0.5);
+    color: #ffc0bb;
+  }
+  .toast-host .toast .dot {
+    width: 18px; height: 18px;
+    background: var(--c-complete);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .toast-host .toast.err .dot { background: var(--c-walkin); }
+  @keyframes toastIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Empty state */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-mute);
+    font-size: 13px;
+    text-align: center;
+    gap: 8px;
+  }
+  .empty .ic {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.04);
+    display: grid; place-items: center;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+
+  /* Demo controls (off-phone) */
+  .demo-hint {
+    position: fixed;
+    bottom: 16px; left: 16px;
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+    font-family: 'JetBrainsMono', monospace;
+    z-index: 50;
+  }
+  .reset-btn {
+    position: fixed;
+    bottom: 16px; right: 16px;
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 50;
+  }
+  .reset-btn:hover { color: #fe8c00; border-color: rgba(254,140,0,0.4); }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="screen">
+    <div class="status-bar">
+      <span class="mono">9:41</span>
+      <div class="right">
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="white"><rect y="6" width="3" height="5" rx=".5"/><rect x="4" y="4" width="3" height="7" rx=".5"/><rect x="8" y="2" width="3" height="9" rx=".5"/><rect x="12" width="3" height="11" rx=".5"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="white"><path d="M8 2.5c1.6 0 3.06.58 4.18 1.54l1.06-1.07A8 8 0 0 0 8 1a8 8 0 0 0-5.24 1.97l1.06 1.07A6.43 6.43 0 0 1 8 2.5Zm0 3.5c.66 0 1.27.2 1.78.55l1.06-1.07A4.4 4.4 0 0 0 8 4.5c-1.07 0-2.04.36-2.84.98l1.06 1.07A3.13 3.13 0 0 1 8 6Zm0 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/></svg>
+        <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x=".5" y=".5" width="20" height="10" rx="2.5" stroke="white" stroke-opacity=".5"/><rect x="2" y="2" width="14" height="7" rx="1" fill="white"/><rect x="21" y="3.5" width="1.5" height="4" rx=".5" fill="white" fill-opacity=".5"/></svg>
+      </div>
+    </div>
+    <div id="app"></div>
+  </div>
+</div>
+
+<button class="reset-btn" id="reset-btn">Reset demo data</button>
+<div class="demo-hint">Use the FAB to add · tap rows to edit · scanner icon → QR flow</div>
+
+<script>
+  // Embed mode: strip device chrome when loaded as ?embed=1 (e.g. inside investor pitch)
+  if (new URLSearchParams(location.search).get('embed') === '1' || window.self !== window.top) {
+    document.body.classList.add('embed');
+    document.documentElement.classList.add('embed');
+  }
+</script>
+<script src="app.js"></script>
+</body>
+</html>

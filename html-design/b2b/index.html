@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="pages/_shared.css?v=ed17" />
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  body { background: var(--paper); }
+  .pg { max-width: 720px; margin: 0 auto; padding: 0 18px 0; }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: var(--paper);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    /* Full-bleed background: negate `.pg`'s 18px side padding so the paper
+       fill extends to the viewport edge instead of revealing the (darker)
+       scrolling content underneath through the 18px gutters. */
+    margin: 0 -18px;
+    padding: 14px 18px 12px;
+  }
+  /* Bash logo on the left of the topbar — sits on a polished dark plaque
+     (same material family as Needs You + the active sub-tab dome) so the
+     orange wordmark reads as a brand chip resting on the page. */
+  .brand-mark {
+    position: relative;
+    display: grid; place-items: center;
+    line-height: 0;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background-color: #1a1a1a;
+    background-image: linear-gradient(to bottom,
+      #3a3a3a 0%,
+      #1a1a1a 55%,
+      #0c0c0c 100%);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.35),
+      0 3px 6px       rgba(0,0,0,0.20),
+      0 1px 2px       rgba(0,0,0,0.14);
+    isolation: isolate;
+  }
+  .brand-mark::before { content: none; }
+  .brand-mark .logo {
+    display: block;
+    height: 20px;
+    width: auto;
+    flex-shrink: 0;
+    align-self: center;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
+  }
+  /* Avatar — polished cream squircle. Same material family as the BASH
+     plaque + Needs You, but in the original soft-cream palette so it stays
+     light/quiet against the orange ticker. */
+  .hdr-btn,
+  .avatar-btn {
+    position: relative;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    color: var(--ink);
+    display: grid; place-items: center;
+    background-color: oklch(0.94 0.012 75);
+    background-image: linear-gradient(to bottom,
+      oklch(0.98 0.010 75) 0%,
+      oklch(0.94 0.012 75) 55%,
+      oklch(0.90 0.014 75) 100%);
+    border: 1px solid oklch(0.84 0.014 75);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(60,40,20,0.08),
+      0 3px 6px       rgba(60,40,20,0.10),
+      0 1px 2px       rgba(60,40,20,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    isolation: isolate;
+  }
+  .avatar-btn::before { content: none; }
+  .avatar-btn svg {
+    width: 22px; height: 22px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Ticker — polished cream pill with a warm-orange tint. Same material
+     family as the avatar / BASH plaque, but in the existing warm-cream
+     palette so the ticker stays its quiet orange-tinted self. */
+  .ticker {
+    position: relative;
+    justify-self: center;
+    width: 100%;
+    max-width: 220px;
+    display: flex; align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    background-color: oklch(0.96 0.035 70 / 0.55);
+    background-image: linear-gradient(to bottom,
+      oklch(0.98 0.038 65 / 0.65) 0%,
+      oklch(0.96 0.035 70 / 0.55) 55%,
+      oklch(0.92 0.040 65 / 0.55) 100%);
+    border: 1px solid oklch(0.78 0.12 55 / 0.45);
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(180,80,20,0.08),
+      0 3px 6px       rgba(180,80,20,0.10),
+      0 1px 2px       rgba(60,40,20,0.06);
+    isolation: isolate;
+  }
+  .ticker::before { content: none; }
+  .ticker-icon {
+    flex: 0 0 18px; width: 18px; height: 18px;
+    display: grid; place-items: center;
+  }
+  .ticker-icon svg { width: 18px; height: 18px; }
+  .ticker-track {
+    flex: 1; min-width: 0;
+    position: relative;
+    height: 100%;
+    display: flex; align-items: center;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+  }
+  .ticker-text {
+    display: inline-block;
+    white-space: nowrap;
+    font-family: var(--display); font-size: 12px; font-weight: 500;
+    color: var(--ink);
+    padding-left: 100%;
+    animation: ticker 22s linear infinite;
+  }
+  @keyframes ticker {
+    to { transform: translateX(-100%); }
+  }
+
+  /* Bell uses the same soft squircle chrome as the avatar. */
+  .bell {
+    position: relative;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: oklch(0.94 0.012 75);
+    border: 1px solid oklch(0.86 0.012 75);
+    border-radius: 12px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.85),
+      0 1px 1px rgba(40,30,20,0.05),
+      0 4px 10px -6px rgba(40,30,20,0.18);
+    cursor: pointer;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .bell svg { width: 22px; height: 22px; }
+  .bell-badge {
+    position: absolute;
+    top: 4px; right: 4px;
+    min-width: 18px; height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: oklch(0.62 0.22 25);
+    color: #fff;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    display: grid; place-items: center;
+    border: 2px solid var(--paper);
+  }
+
+  /* ============ SECTION ============ */
+  .sect { padding: 22px 0 6px; }
+  .sect-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .sect-label {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.20em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 500;
+  }
+  .view-all {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--ink-2); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .view-all svg { width: 12px; height: 12px; }
+
+  /* ============ HERO — Black metal card (ported from b2c TierMetalCard) ============
+     4-layer composite: 135° metal gradient + specular hotspot + brushed noise +
+     animated diagonal shine sweep. Engraved bevel via inset box-shadow. */
+  .hero {
+    position: relative;
+    display: block;
+    border-radius: 18px;
+    overflow: hidden;
+    isolation: isolate;
+    text-decoration: none;
+    color: #e8dfce;                                  /* BLACK.text — ivory */
+    background-color: #25211e;                       /* BLACK.mid — fallback */
+    background-image:
+      radial-gradient(140% 90% at 18% 12%, rgba(120,108,92,0.35) 0%, transparent 55%),
+      linear-gradient(135deg,
+        #000000 0%,
+        #141110 18%,
+        #25211e 42%,
+        #3a342e 55%,
+        #25211e 70%,
+        #141110 88%,
+        #000000 100%);
+    box-shadow:
+      inset 0  1.5px 0    rgba(232,223,206,0.18),    /* edgeHi top */
+      inset 0 -1.5px 0    rgba(0,0,0,0.6),           /* edgeLo bottom */
+      inset  1.5px 0 0    rgba(232,223,206,0.18),    /* edgeHi left */
+      inset -1.5px 0 0    rgba(0,0,0,0.6),           /* edgeLo right */
+      0 22px 48px -22px rgba(0,0,0,0.55);
+    min-height: 196px;
+    padding: 22px 22px 0;
+  }
+  /* Brushed-metal micro-texture (Layer 3) */
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4 0.025' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.22 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+    background-size: 240px 240px;
+    mix-blend-mode: overlay;
+    opacity: 0.9;
+  }
+  /* Moving specular sweep (Layer 4) — diagonal highlight rides every 5.5s */
+  .hero::after {
+    content: "";
+    position: absolute;
+    top: -30%; bottom: -30%;
+    left: 0; width: 55%;
+    z-index: 2;
+    pointer-events: none;
+    background-image: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,0.04) 30%,
+      rgba(255,255,255,0.32) 50%,
+      rgba(255,255,255,0.04) 70%,
+      transparent 100%);
+    filter: blur(6px);
+    mix-blend-mode: screen;
+    animation: hero-metal-shine 5.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+  @keyframes hero-metal-shine {
+    0%   { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+    8%   { opacity: 1; }
+    50%  { transform: translateX(60%)  skewX(-18deg); opacity: 1; }
+    92%  { opacity: 0; }
+    100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero::after { animation: none; }
+  }
+
+  /* Content sits above all metal layers */
+  .hero-eyebrow,
+  .hero-title,
+  .hero-cta,
+  .hero-glyph,
+  .hero-foot { position: relative; z-index: 3; }
+
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.20em; text-transform: uppercase;
+    color: rgba(232,223,206,0.55);
+    margin-bottom: 14px;
+  }
+  .hero-title {
+    font-family: var(--display); font-weight: 600;
+    font-size: 22px; line-height: 1.18; letter-spacing: -0.01em;
+    color: #e8dfce;
+    max-width: 60%;
+    margin-bottom: 18px;
+  }
+  .hero-title em {
+    font-style: italic; font-weight: 500;
+    color: oklch(0.92 0.10 80);                      /* gold accent */
+  }
+  .hero-cta {
+    display: inline-flex; align-items: center;
+    padding: 10px 18px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 0; border-radius: 8px;
+    font-family: var(--display); font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 8px 18px -10px rgba(0,0,0,0.6);
+  }
+  .hero-glyph {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 168px; height: 168px;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  /* FB-style one-shot ripple: rings expand outward from the center dot, halt at final state. */
+  .hero-glyph .ring,
+  .hero-glyph .center-dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: cubic-bezier(0.18, 0.9, 0.32, 1);
+  }
+  .hero-glyph .center-dot {
+    animation-name: hero-dot-spawn;
+    animation-duration: 380ms;
+    animation-delay: 200ms;
+    animation-timing-function: cubic-bezier(0.5, 1.6, 0.4, 1);
+  }
+  .hero-glyph .ring   { animation-name: hero-ring-ripple; animation-duration: 900ms; }
+  .hero-glyph .ring-1 { animation-delay: 380ms; }
+  .hero-glyph .ring-2 { animation-delay: 540ms; }
+  .hero-glyph .ring-3 { animation-delay: 700ms; }
+  @keyframes hero-dot-spawn {
+    0%   { transform: scale(0);   opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes hero-ring-ripple {
+    0%   { transform: scale(0);   opacity: 0; }
+    55%  { opacity: 1; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-glyph .ring,
+    .hero-glyph .center-dot { animation: none; transform: scale(1); opacity: 1; }
+  }
+  .hero-foot {
+    margin-top: 22px;
+    margin-left: -22px; margin-right: -22px;
+    padding: 10px 22px;
+    background: rgba(0,0,0,0.45);
+    border-top: 1px solid rgba(232,223,206,0.14);
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(232,223,206,0.62);
+  }
+  .hero-foot .dot {
+    width: 8px; height: 8px; border-radius: 999px;
+    background: var(--orange);
+    box-shadow: 0 0 0 4px oklch(0.68 0.205 45 / 0.25);
+  }
+
+  /* ============ PILL ROW ============ */
+  /* Row matches `.subtab-nav` / `.brief-tabs` — pills size to content, 10px gap. */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill-row.three { gap: 10px; }
+
+  /* Pill — byte-for-byte match of `.subtab-nav a` / `.brief-tabs a`:
+     content-sized rounded-pill, mono 11px uppercase, hairline border. */
+  .pill {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: transparent;
+    text-decoration: none;
+    white-space: nowrap;
+    color: var(--ink-3);
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 150ms, color 150ms, background 150ms;
+  }
+  .pill:hover  { color: var(--ink); border-color: var(--ink-3); }
+  .pill.active,
+  .pill:active { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+  /* Hide any legacy inner spans (icon / chev / meta) — pills are text-only like
+     the chapter switcher. `.sm` is no longer a size variant; it inherits .pill. */
+  .pill .pill-icon,
+  .pill .pill-chev,
+  .pill .pill-meta { display: none; }
+  .pill .pill-label { display: inline; }
+
+  /* ============ ICON GRID ============ */
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  .icon-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--ink);
+  }
+  /* Polished orange-dome disc — reads as a 3D button, not a flat tile.
+     Built in 4 layers per the reference:
+       1. Top-lit vertical gradient (light at top → user's brand at bottom)
+       2. Multi-layer box-shadow stack — top rim highlight, bottom shadow
+          pool, peach inner glow, edge line, coloured drop, contact shadow
+       3. ::before gloss — asymmetric ellipse fading white over upper half
+       4. SVG drop-shadow filter — dark below + light above → engraved glyph
+     Same palette in both themes (user said be ready to flip — easy via a
+     `.theme-dark .icon-circle` override later if needed). */
+  .icon-circle {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    color: #ffffff;
+    background-color: #f83800;                                  /* fallback */
+    background-image: linear-gradient(to bottom,
+      #fe8700 0%,
+      #f83800 100%);
+    border: 0;
+    box-shadow:
+      0 0.5px 0 0.5px rgba(150,45,12,0.5),                      /* edge line       */
+      0 8px 13px      rgba(170,55,12,0.45),                     /* coloured drop   */
+      0 3px 7px       rgba(0,0,0,0.28);                         /* contact shadow  */
+    transition: transform 120ms ease, box-shadow 200ms ease;
+  }
+  .icon-circle::before { content: none; }
+  .icon-circle svg,
+  .icon-circle img { position: relative; z-index: 3; }
+  /* Engraved glyph — dark drop-shadow below + light rim above so the icon
+     looks carved into the orange, not printed on it. */
+  .icon-circle svg {
+    width: 26px; height: 26px;
+    stroke-width: 1.6;
+    color: #ffffff;
+    filter:
+      drop-shadow(0 1px 1px rgba(120,30,5,0.55))
+      drop-shadow(0 -1px 0 rgba(255,255,255,0.25));
+  }
+  .icon-circle img {
+    width: 34px; height: 34px;
+    object-fit: contain;
+    pointer-events: none;
+    filter: brightness(0) invert(1)
+      drop-shadow(0 1px 1px rgba(120,30,5,0.55))
+      drop-shadow(0 -1px 0 rgba(255,255,255,0.25));
+  }
+  .icon-circle svg.orange-glyph {
+    width: 30px; height: 30px;
+    stroke-width: 1.9;
+    stroke: #ffffff;
+    color: #ffffff;
+  }
+  /* Hover keeps the dome but pumps the drop shadow; active sinks 1px so
+     the disc feels pressed (per the reference's `:active { translateY(1px) }`
+     pattern). */
+  .icon-tile:hover .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(150,45,12,0.55),
+      0 12px 18px     rgba(170,55,12,0.55),
+      0 5px 10px      rgba(0,0,0,0.32);
+  }
+  .icon-tile:active .icon-circle {
+    transform: translateY(1px);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(150,45,12,0.5),
+      0 4px 8px       rgba(170,55,12,0.40),
+      0 2px 4px       rgba(0,0,0,0.30);
+  }
+  /* "Coming soon" pill — sits centered at the bottom of the disc, half
+     overlapping the circle's bottom edge (per the reference). When present
+     it bumps the icon-tile column gap so the label below has breathing
+     room (uses :has() to avoid hand-wiring a modifier class per tile). */
+  /* Polished pill — vertical 3-stop dark gradient + inset bevel + bottom
+     pool + drop shadow + text-shadow. Same pattern as the reference. */
+  .soon-pill {
+    position: absolute;
+    bottom: -6px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom,
+      #3a3a3a 0%,
+      #1a1a1a 55%,
+      #0c0c0c 100%);
+    color: #f0f0f0;
+    font-family: var(--mono); font-size: 6.5px; font-weight: 700;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    z-index: 4;                                              /* above gloss + glyph */
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.18),                  /* lit top rim         */
+      inset 0 -2px 4px rgba(0,0,0,0.6),                      /* shade pool          */
+      0 5px 12px rgba(0,0,0,0.35);                           /* drop shadow         */
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.6);
+    pointer-events: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  /* Animated shine sweep on the badge — same b2c TierMetalCard technique,
+     scaled down. Right → left, 8s cycle. */
+  .soon-pill::after {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(110deg,
+      transparent 38%,
+      rgba(255,255,255,0.55) 50%,
+      transparent 62%);
+    background-size: 280% 100%;
+    background-position: 280% 0;
+    animation: pill-shine 8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes pill-shine {
+    0%   { background-position: 280% 0;  opacity: 0; }
+    10%  { opacity: 1; }
+    55%  { background-position: -180% 0; opacity: 1; }
+    90%  { opacity: 0; }
+    100% { background-position: -180% 0; opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .soon-pill::after { animation: none; opacity: 0; }
+  }
+  .icon-tile:has(.soon-pill) { gap: 14px; }
+  /* "Coming soon" discs — grey gradient instead of brand orange, so live
+     features stay orange and the coming-soon ones recede into neutral. */
+  .icon-tile:has(.soon-pill) .icon-circle {
+    background-color: #969696;
+    background-image: linear-gradient(to bottom,
+      #b8b8b8 0%,
+      #8c8c8c 100%);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(60,60,60,0.35),
+      0 8px 13px      rgba(60,60,60,0.32),
+      0 3px 7px       rgba(0,0,0,0.24);
+  }
+  .icon-tile:has(.soon-pill):hover .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(60,60,60,0.40),
+      0 12px 18px     rgba(60,60,60,0.40),
+      0 5px 10px      rgba(0,0,0,0.28);
+  }
+  .icon-tile:has(.soon-pill):active .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(60,60,60,0.35),
+      0 4px 8px       rgba(60,60,60,0.30),
+      0 2px 4px       rgba(0,0,0,0.26);
+  }
+  /* Engraved glyph stays white but with neutral drop-shadow instead of warm. */
+  .icon-tile:has(.soon-pill) .icon-circle svg,
+  .icon-tile:has(.soon-pill) .icon-circle img {
+    filter: brightness(0) invert(1)
+      drop-shadow(0 1px 1px rgba(60,60,60,0.50))
+      drop-shadow(0 -1px 0 rgba(255,255,255,0.30));
+  }
+  /* Dark theme: deepen the drop shadow under the grey discs so they read
+     against dark paper. Surface gradient stays the same. */
+  .theme-dark .icon-tile:has(.soon-pill) .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.55),
+      0 8px 13px      rgba(0,0,0,0.50),
+      0 3px 7px       rgba(0,0,0,0.36);
+  }
+  .theme-dark .icon-tile:has(.soon-pill):hover .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.60),
+      0 12px 18px     rgba(0,0,0,0.55),
+      0 5px 10px      rgba(0,0,0,0.42);
+  }
+  .theme-dark .icon-tile:has(.soon-pill):active .icon-circle {
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.55),
+      0 4px 8px       rgba(0,0,0,0.45),
+      0 2px 4px       rgba(0,0,0,0.40);
+  }
+  .icon-label {
+    font-family: var(--display); font-weight: 500; font-size: 12.5px;
+    text-align: center; line-height: 1.2;
+    color: var(--ink);
+    max-width: 84px;
+  }
+
+  /* Needs you uses _shared.css styles — just zero out its side/bottom margin so it spans the hub column. */
+  .needs { margin: 14px 0 0; }
+
+  .pad-bottom { height: 140px; }
+
+  /* Reveal fade-in (already in _shared.css but we declare for safety) */
+  .reveal { opacity: 0; transform: translateY(8px); transition: opacity 480ms ease, transform 480ms cubic-bezier(0.2,0.8,0.2,1); }
+  .reveal.shown, .reveal.in-view { opacity: 1; transform: none; }
+
+  /* ============ DARK MODE OVERRIDES ============
+     Polished header items invert in dark mode so contrast holds:
+     - BASH plaque: dark → cream gradient
+     - Avatar: cream → dark gradient
+     - Ticker: warm cream → warm dark gradient
+     All keep their drop-shadow polish; just the surface flips. */
+
+  .theme-dark .avatar-btn,
+  .theme-dark .bell {
+    background-color: oklch(0.24 0.010 75);
+    background-image: linear-gradient(to bottom,
+      oklch(0.32 0.010 75) 0%,
+      oklch(0.24 0.010 75) 55%,
+      oklch(0.18 0.010 75) 100%);
+    border-color: oklch(0.32 0.010 75);
+    color: oklch(0.96 0.008 75);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.45),
+      0 3px 6px       rgba(0,0,0,0.35),
+      0 1px 2px       rgba(0,0,0,0.30);
+  }
+  .theme-dark .avatar-btn svg { color: oklch(0.96 0.008 75); }
+
+  /* Ticker: warm cream tint → warm dark amber gradient that reads on dark paper. */
+  .theme-dark .ticker {
+    background-color: oklch(0.28 0.040 55 / 0.85);
+    background-image: linear-gradient(to bottom,
+      oklch(0.34 0.045 55 / 0.85) 0%,
+      oklch(0.28 0.040 55 / 0.85) 55%,
+      oklch(0.22 0.035 55 / 0.85) 100%);
+    border-color: oklch(0.55 0.18 50 / 0.45);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.35),
+      0 3px 6px       rgba(0,0,0,0.30),
+      0 1px 2px       rgba(0,0,0,0.22);
+  }
+  .theme-dark .ticker .ticker-text { color: oklch(0.96 0.008 75); }
+
+  /* Icon disc is theme-neutral now — the brand gradient is identical in
+     both light and dark modes. No `.theme-dark .icon-circle` override
+     needed. (Architecture stays ready to flip if we want a different
+     palette in dark mode later — just re-introduce the override block.) */
+
+  /* Soon-pill is now a hardcoded dark gradient (theme-stable), so its
+     white shine works in both modes — no theme-dark override needed.
+     Icon disc + glyph also stay identical across themes (single orange
+     palette). Topbar paper bg + brief sticky block flip via var(--paper). */
+
+  /* ============================================================
+     BRIEF CHAPTERS — ported from pages/brief.html so the hub
+     renders the editorial brief (Visitors / Register / Customer /
+     Loyalty) inline. Keep token names aligned with _shared.css.
+     ============================================================ */
+
+  /* Chart containers */
+  .chart-box { width: 100%; height: 180px; }
+  .chart-box.tall { height: 220px; }
+  .chart-box.short { height: 140px; }
+  .chart-box.heatmap { height: 200px; }
+  .chart-box.donut { height: 150px; flex: 0 0 150px; }
+
+  /* Dual-chart pattern: fixed y-axis + scrolling bars */
+  .dual-chart { display: flex; position: relative; align-items: stretch; }
+  .dual-chart-yaxis {
+    flex: 0 0 38px; position: relative; z-index: 2; background: var(--paper);
+    height: 200px;
+  }
+  .dual-chart-yaxis .ytick {
+    position: absolute; right: 6px;
+    transform: translateY(-50%);
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-3); font-weight: 500;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .dual-chart-bars {
+    flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--rule) transparent;
+    position: relative;
+  }
+  .dual-chart-bars::-webkit-scrollbar { height: 4px; }
+  .dual-chart-bars::-webkit-scrollbar-track { background: transparent; }
+  .dual-chart-bars::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+  .dual-chart-bars > div { width: 1600px; height: 200px; }
+  .dual-chart.weekly .dual-chart-bars > div { width: 900px; }
+  .dual-chart::after {
+    content: ''; position: absolute; left: 38px; top: 0; bottom: 14px; width: 24px;
+    background: linear-gradient(to right, var(--paper), transparent);
+    pointer-events: none; z-index: 1; opacity: 0; transition: opacity 0.15s;
+  }
+  .dual-chart.scrolled::after { opacity: 1; }
+  .dual-chart::before {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 14px; width: 24px;
+    background: linear-gradient(to left, var(--paper), transparent);
+    pointer-events: none; z-index: 1; opacity: 1; transition: opacity 0.15s;
+  }
+  .dual-chart.at-end::before { opacity: 0; }
+  .drag-pill {
+    position: absolute; right: 12px; top: 8px;
+    z-index: 4; pointer-events: none;
+    font-family: var(--display); font-style: italic; font-weight: 500;
+    font-size: 10px; line-height: 1; letter-spacing: 0.01em;
+    color: var(--orange);
+    background: var(--paper);
+    padding: 4px 8px 4px 6px;
+    border: 1px solid var(--orange);
+    border-radius: 999px;
+    white-space: nowrap;
+    animation: dragBlink 1.6s ease-in-out infinite;
+    transition: opacity 0.35s, visibility 0.35s;
+  }
+  .drag-pill::before { content: '←'; font-style: normal; margin-right: 4px; }
+  @keyframes dragBlink {
+    0%, 100% { color: oklch(0.68 0.205 45 / 0.55); border-color: oklch(0.68 0.205 45 / 0.5); }
+    50%      { color: var(--orange); border-color: var(--orange); }
+  }
+  .dual-chart.dragged .drag-pill {
+    opacity: 0; visibility: hidden; animation: none;
+  }
+
+  /* Inline legend chips for stacked charts */
+  .legend-chips { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-3); }
+  .legend-chips .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink-2); text-transform: none; padding: 0; background: transparent; border: none; border-radius: 0; cursor: default; }
+  .legend-chips .chip i { width: 10px; height: 10px; border-radius: 1px; display: inline-block; }
+
+  /* Chapter break — magazine-style heading */
+  .chapter {
+    padding: var(--space-7) var(--space-5) var(--space-4);
+    margin-top: var(--space-3);
+  }
+  .chapter .kicker {
+    font-family: var(--display); font-style: italic; font-weight: 400;
+    font-size: 13px; letter-spacing: 0.02em; color: var(--ink-2);
+  }
+  .chapter h2 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(34px, 9vw, 44px);
+    line-height: 1.04; letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-top: var(--space-2);
+  }
+  .chapter h2 .accent { color: var(--orange); font-style: italic; font-weight: 500; }
+  .chapter .deck {
+    font-family: var(--display); font-size: 15px; line-height: 1.4;
+    color: var(--ink-2); margin-top: var(--space-3); max-width: 36ch;
+  }
+
+  /* 4-up stat strip */
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--rule);
+  }
+  .stat {
+    padding: var(--space-4) var(--space-3);
+    border-right: 1px solid var(--rule);
+    text-align: center;
+  }
+  .stat:last-child { border-right: none; }
+  .stat .stat-value {
+    font-family: var(--display); font-weight: 600;
+    font-size: 28px; letter-spacing: -0.02em; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat .stat-label {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .stat .stat-value.flag { color: var(--orange); }
+
+  /* Persona bars */
+  .persona-grid { display: flex; flex-direction: column; gap: var(--space-2); }
+  .persona-row { display: flex; flex-direction: row; align-items: center; gap: var(--space-3); }
+  .persona-meta { display: flex; justify-content: space-between; align-items: baseline; }
+  .persona-meta .p-name { order: 1; flex: 0 0 110px; font-family: var(--display); font-size: 14px; font-weight: 500; letter-spacing: -0.005em; }
+  .persona-bar { order: 2; flex: 1 1 auto; height: 6px; background: var(--rule-2); position: relative; }
+  .persona-bar span { position: absolute; inset: 0 auto 0 0; background: var(--ink); display: block; }
+  .persona-meta .p-count { order: 3; flex: 0 0 auto; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-2); letter-spacing: 0.04em; }
+  .persona-meta .p-pct { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.06em; margin-left: 6px; }
+  .persona-row.hl .persona-bar span { background: var(--orange); }
+  .persona-row.hl .persona-meta .p-name { color: var(--orange); font-style: italic; }
+  .persona-row.cat-blue .persona-bar span { background: var(--blue); }
+  .persona-row.cat-teal .persona-bar span { background: var(--teal); }
+  .persona-row.cat-plum .persona-bar span { background: var(--plum); }
+  .persona-row.cat-gold .persona-bar span { background: var(--gold); }
+  .persona-row.cat-purple .persona-bar span { background: var(--purple); }
+
+  /* Tonight's arrivals timeline */
+  .arrival-timeline { padding: var(--space-3) 0 var(--space-2); }
+  .timeline-track {
+    position: relative;
+    height: 56px;
+    background: var(--paper-2);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .timeline-track .dot {
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.78;
+  }
+  .timeline-track .dot.qr        { background: var(--orange); }
+  .timeline-track .dot.walkin    { background: var(--ink); }
+  .timeline-track .dot.reserve   { background: var(--ink-2); }
+  .timeline-track .dot.guestlist { background: var(--ink-3); }
+  .timeline-track .dot.live {
+    width: 11px; height: 11px;
+    background: var(--positive);
+    opacity: 1;
+    box-shadow: 0 0 0 0 oklch(0.55 0.130 145 / 0.4);
+    animation: dotPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.130 145 / 0.4); }
+    50%      { box-shadow: 0 0 0 8px oklch(0.55 0.130 145 / 0); }
+  }
+  .timeline-track .now-line {
+    position: absolute; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--positive);
+    opacity: 0.5;
+  }
+  .timeline-axis { position: relative; height: 14px; margin-top: var(--space-2); }
+  .timeline-axis .tick {
+    position: absolute;
+    transform: translateX(-50%);
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .timeline-axis .tick.now { color: var(--positive); font-weight: 600; }
+  .live-pulse {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--positive);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: dotPulse 1.6s ease-in-out infinite;
+    vertical-align: middle;
+  }
+
+  /* Split layout (donut + key fact) */
+  .split { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-4); align-items: center; }
+  .split .key { display: flex; flex-direction: column; gap: 6px; }
+  .split .key .kv {
+    font-family: var(--display); font-weight: 600;
+    font-size: 36px; line-height: 1; letter-spacing: -0.025em;
+  }
+  .split .key .kl {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .split .key .ks { font-family: var(--display); font-size: 13px; color: var(--ink-2); }
+
+  /* Customer lists */
+  .cust-list { display: flex; flex-direction: column; }
+  .cust-row {
+    display: grid; grid-template-columns: 24px 1fr auto;
+    gap: var(--space-3); align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule-2);
+  }
+  .cust-row:last-child { border-bottom: none; }
+  .cust-row .rank { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; }
+  .cust-row .name { font-family: var(--display); font-size: 14px; font-weight: 500; letter-spacing: -0.005em; }
+  .cust-row .name .meta-inline { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; margin-left: 6px; }
+  .cust-row .visits { font-family: var(--mono); font-size: 12px; color: var(--ink-2); letter-spacing: 0.04em; }
+  .cust-row.risk .visits { color: var(--orange); }
+
+  /* Export button (section head right) */
+  .export-btn {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-2);
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color 150ms, color 150ms;
+  }
+  .export-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .export-btn::before { content: '↓ '; margin-right: 1px; }
+
+  /* Tonight's needs-you (Guest register chapter) — swipe-to-clear list */
+  .att-row {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule-2);
+    max-height: 120px;
+    transition: max-height 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 220ms ease,
+                margin 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .att-row:last-child { border-bottom: none; }
+  .att-row.removing { max-height: 0; opacity: 0; }
+  .att-item {
+    position: relative; z-index: 2;
+    background: var(--paper);
+    padding: var(--space-3) 0;
+    display: flex; align-items: baseline; gap: var(--space-3);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y;
+    transform: translateX(0);
+    transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background 150ms;
+  }
+  .att-row.swiped .att-item { transform: translateX(-96px); }
+  .att-row.swiping .att-item { transition: none; }
+  .att-item:hover { background: var(--paper-2); }
+  .att-item .glyph { font-family: var(--mono); font-size: 11px; color: var(--orange); letter-spacing: 0.1em; min-width: 14px; }
+  .att-item .text { flex: 1; font-family: var(--display); font-size: 15px; line-height: 1.35; }
+  .att-item .text em { color: var(--ink-2); font-style: italic; }
+  .att-row .att-clear {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 96px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--orange);
+    border: 0;
+    color: #f7f4ee;
+    font-family: var(--sans); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer;
+    z-index: 1;
+    opacity: 0; pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+  .att-row.swiped .att-clear,
+  .att-row.swiping .att-clear { opacity: 1; pointer-events: auto; }
+  .att-row .att-clear:hover { background: oklch(0.62 0.21 45); }
+
+  .sec-head .clear-all {
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--orange); background: transparent; border: 0;
+    cursor: pointer; padding: 0;
+    transition: color 150ms;
+  }
+  .sec-head .clear-all:hover { color: var(--ink); }
+  .sec-head .clear-all:disabled { color: var(--ink-3); cursor: default; }
+
+  /* Analytics label — just the kicker now (headline/deck removed). Bottom
+     padding trimmed so the label sits close above the sticky pills. */
+  .headline {
+    padding: var(--space-6) var(--space-5) 0;
+  }
+  /* Headline kicker matches the hub's other section labels (.sect-label) so
+     "Analytics" reads the same size/weight as "Quick access", "Hospitality". */
+  .headline .kicker {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.20em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 500;
+    margin-bottom: 0;
+  }
+  .headline h1 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(34px, 9vw, 44px);
+    line-height: 1.04; letter-spacing: -0.025em;
+    margin-bottom: var(--space-3);
+  }
+  .headline h1 .accent { color: var(--orange); font-style: italic; font-weight: 500; }
+  .headline .deck {
+    font-family: var(--display);
+    font-size: 15px; line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 36ch;
+  }
+
+  /* Brief content full-bleed — chapter sections in brief.html sat directly
+     inside the 420px device frame with .sec providing its own padding. In
+     the hub they sit inside .pg (max-width 720px + 18px side padding) which
+     stacked extra gutter on top of .sec's padding. Negate the .pg padding
+     on every direct brief-content child so the sections, kpi grids, and
+     dual charts spread end-to-end exactly like brief.html. */
+  .brief-shell { margin: 0 -18px; position: relative; }
+
+  /* Brief sticky block — wraps the headline + brief-tabs so they stick to
+     the top as ONE combined header when the user scrolls into the brief.
+     The main `.topbar` is hidden via `body.brief-stuck` (set by an
+     IntersectionObserver on a sentinel just above the brief). */
+  .brief-stick-block {
+    position: sticky; top: 0; z-index: 35;
+    background: var(--paper);
+  }
+  /* Topbar slides up out of view when the brief is the active sticky head. */
+  .topbar { transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  body.brief-stuck .topbar { transform: translateY(-100%); pointer-events: none; }
+
+  /* AI-SUMMARY label above each chart caption — ported from brief.html's
+     inline `.caption::before`. The shared `.caption` rule in _shared.css
+     doesn't include the orange "AI SUMMARY" prefix; scope it here so it
+     shows up under every chart in the brief section without polluting
+     other pages' captions. */
+  .brief-shell .caption {
+    margin-top: var(--space-3);
+    max-width: 42ch;
+    position: relative;
+  }
+  .brief-shell .caption::before {
+    content: 'AI summary';
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 8px;
+  }
+  .brief-shell .caption .em { color: var(--ink); font-weight: 500; font-style: italic; }
+
+  /* ============================================================
+     APP TREATMENT — all Analytics chapters (Visitors, Guest register,
+     Customers, Loyalty).
+     Stop dividing with LINES (paper) and start grouping with
+     SURFACES (app): KPI ledger → soft rounded tiles, sections →
+     strong elevated cards separated by space. Charts + text are
+     untouched; we only re-tint the chart masks to the card fill so
+     they stay invisible against it.
+     ============================================================ */
+  .brief-tab {
+    padding: var(--space-2) 0 var(--space-3);
+  }
+
+  /* Top-level KPI grids → uniform tiles. The child combinator (> >) raises
+     specificity above the shared `.kpi-grid-3 .kpi-cell:nth-child(...)`
+     rules so their leftover hairline borders + asymmetric edge padding
+     don't leak through, and it only targets STANDALONE grids (not ones
+     nested inside a section card — handled separately below). */
+  .brief-tab > .kpi-grid {
+    border: 0;
+    gap: 10px;
+    padding: 0 var(--space-5);
+    margin-bottom: var(--space-4);
+    grid-auto-rows: 1fr;          /* every row equal height → all tiles identical */
+  }
+  .brief-tab > .kpi-grid > .kpi-cell {
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    border-radius: 16px;
+    padding: var(--space-4) var(--space-3);
+    min-height: 104px;
+    box-shadow:
+      0 1px 2px      rgba(40,30,20,0.05),
+      0 8px 20px -12px rgba(40,30,20,0.18);
+  }
+  /* Value never wraps to a second line (keeps "0.8 mo" / "−48.1%" on one
+     row); the 3-col grids get a slightly smaller value so it fits the
+     narrower tile. */
+  .brief-tab > .kpi-grid > .kpi-cell .kpi-value { white-space: nowrap; }
+  .brief-tab > .kpi-grid-3 > .kpi-cell .kpi-value { font-size: 23px; }
+
+  /* KPI grids NESTED inside a section card (e.g. Win-back trail) are NOT
+     standalone tiles — flatten them to plain inline sub-stats so we never
+     get cards-inside-a-card or a column clipped past the card's rounded
+     overflow edge. */
+  .brief-tab .sec .kpi-grid {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    gap: var(--space-4);
+    grid-auto-rows: auto;
+  }
+  .brief-tab .sec .kpi-cell {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    min-height: 0;
+  }
+  .brief-tab .sec .kpi-cell .kpi-value { font-size: 22px; white-space: nowrap; }
+
+  /* Sections → cards: drop the full-bleed bottom hairline; each section
+     is a strong elevated surface inset from the edges and separated by
+     space — crisp hairline + a single soft diffuse shadow (modern flat
+     elevation, not glossy bevel). overflow:hidden so charts + the data
+     table respect the rounded corners. */
+  .brief-tab .sec {
+    border-bottom: 0;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    border-radius: 18px;
+    margin: 0 var(--space-5) var(--space-4);
+    overflow: hidden;
+    box-shadow:
+      0 1px 2px       rgba(40,30,20,0.05),
+      0 10px 28px -14px rgba(40,30,20,0.20);
+  }
+
+  /* Dark mode — deepen the elevation shadow so the cards still lift off
+     the dark page (the warm light-mode shadow disappears on dark). */
+  .theme-dark .brief-tab > .kpi-grid > .kpi-cell,
+  .theme-dark .brief-tab .sec {
+    box-shadow:
+      0 1px 2px        rgba(0,0,0,0.40),
+      0 10px 28px -12px rgba(0,0,0,0.55);
+  }
+  /* Nested sub-stat cells carry no elevation in dark mode either. */
+  .theme-dark .brief-tab .sec .kpi-cell { box-shadow: none; }
+
+  /* Chart masks ride the card fill now (was --paper) so the fixed y-axis
+     strip + horizontal scroll fades stay invisible on the surface. The
+     ECharts canvases themselves are unchanged. */
+  .brief-tab .dual-chart-yaxis { background: var(--paper-2); }
+  .brief-tab .dual-chart::after {
+    background: linear-gradient(to right, var(--paper-2), transparent);
+  }
+  .brief-tab .dual-chart::before {
+    background: linear-gradient(to left, var(--paper-2), transparent);
+  }
+  /* Drag-pill sat on --paper; match it to the card fill. */
+  .brief-tab .drag-pill { background: var(--paper-2); }
+
+  /* Data tables (Recent entries / customer + loyalty lists) sit inside a
+     paper-2 card now: match the sticky header fill + give the row hover a
+     lighter tone so it stays visible against the card (was the same paper-2). */
+  .brief-tab .data-table thead th { background: var(--paper-2); }
+  .brief-tab .data-table tbody tr:hover td { background: var(--paper); }
+
+  /* Brief tab switcher — same pattern as brief.html so the 4 chapters share
+     one Analytics section and the user swaps between them via pills (no
+     long scroll). Sticks directly below the topbar (top: 70px matches the
+     topbar's 14+44+12 padded height) so chart content can never leak into
+     the gap between them. Full-bleed via -18px margin to cancel `.pg`'s
+     side padding. */
+  /* Brief tabs — no longer needs its own `position: sticky` because it
+     lives inside `.brief-stick-block` which sticks as one unit. */
+  .brief-tabs {
+    background: var(--paper);
+    padding: 14px 18px 16px;
+    display: flex; gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brief-tabs::-webkit-scrollbar { display: none; }
+  .brief-tabs a {
+    flex: 0 0 auto;
+    position: relative;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-3); text-decoration: none;
+    padding: 7px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 150ms, color 150ms, background 150ms;
+  }
+  .brief-tabs a:hover { color: var(--ink); border-color: var(--ink-3); }
+  /* Active tab — polished dome pill, matches the icon-circle material so the
+     brief section feels like part of the same tactile system as Quick access /
+     Hospitality / Growth / Operations. */
+  .brief-tabs a.active {
+    color: #f0f0f0;
+    background-color: #0c0c0c;
+    background-image: linear-gradient(to bottom,
+      #3a3a3a 0%,
+      #1a1a1a 55%,
+      #0c0c0c 100%);
+    border: 0;
+    padding: 8px 15px;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.55),
+      0 6px 11px      rgba(0,0,0,0.42),
+      0 2px 5px       rgba(0,0,0,0.3);
+  }
+  /* Dark theme: invert the active tab so the dome reads against dark paper. */
+  .theme-dark .brief-tabs a.active {
+    color: oklch(0.18 0.012 70);
+    background-color: oklch(0.94 0.012 75);
+    background-image: linear-gradient(to bottom,
+      oklch(0.98 0.010 75) 0%,
+      oklch(0.94 0.012 75) 55%,
+      oklch(0.88 0.014 75) 100%);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 -1px 0 rgba(0,0,0,0.05);
+    box-shadow:
+      0 0.5px 0 0.5px rgba(0,0,0,0.35),
+      0 6px 11px      rgba(0,0,0,0.40),
+      0 2px 5px       rgba(0,0,0,0.28);
+  }
+  .brief-tabs a.active::before {
+    content: "";
+    position: absolute;
+    top: 8%; left: 6%; right: 6%; height: 48%;
+    border-radius: 999px;
+    background: linear-gradient(to bottom,
+      rgba(255,255,255,0.20) 0%,
+      rgba(255,255,255,0.08) 55%,
+      rgba(255,255,255,0)    100%);
+    pointer-events: none;
+  }
+  .brief-tab { display: none; }
+  .brief-tab.active { display: block; }
+  /* First chapter inside an active pane sits close to the pills, not deep below */
+  .brief-tab > .chapter:first-child { padding-top: var(--space-3); }
+</style>
+</head>
+<body>
+<!-- SVG defs — shared gradients referenced by inline SVG icons via url(#id) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="bashOrangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#ff7a1a"/>
+      <stop offset="55%"  stop-color="#ff4d00"/>
+      <stop offset="100%" stop-color="#c93800"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="pg">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <!-- Bash logo — same SVG asset and markup used in brief.html masthead. -->
+    <a class="brand-mark" href="pages/brief.html" aria-label="Bash">
+      <img class="logo" src="Group%20(2)%202.svg" alt="Bash" />
+    </a>
+
+    <a class="ticker" href="pages/brief.html#chat" data-prompt="Walk me through everything that needs my attention right now.">
+      <span class="ticker-icon" aria-hidden="true">
+        <!-- alert / sparkle -->
+        <svg viewBox="0 0 24 24" fill="url(#bashOrangeGradient)" stroke="url(#bashOrangeGradient)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L13.6 8.4 L20 10 L13.6 11.6 L12 18 L10.4 11.6 L4 10 L10.4 8.4 Z"/></svg>
+      </span>
+      <span class="ticker-track">
+        <span class="ticker-text">47 in tonight · ₹4.2L this week · Friday EDM hit 412 · 3 review-risk tables · 47 in tonight · ₹4.2L this week · Friday EDM hit 412 · 3 review-risk tables ·&nbsp;</span>
+      </span>
+    </a>
+
+    <a class="avatar-btn" href="pages/brief.html#settings" aria-label="Profile and settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      </svg>
+    </a>
+  </header>
+
+  <!-- ============ NEEDS YOU (top) — uses shared .needs swipe-to-clear pattern ============ -->
+  <section class="needs reveal">
+    <div class="sec-head">
+      <div class="label">Needs you</div>
+      <div class="meta">3 items</div>
+    </div>
+    <div class="act-row" data-prompt="Poster 2 (brunch) expired Thursday but is still showing — take it down and replace with the next active poster.">
+      <div class="glyph">→</div>
+      <div class="text">Poster 2 (<em>brunch</em>) expired Thu — still showing.</div>
+    </div>
+    <div class="act-row" data-prompt="No entries on the guest register since Apr 20 — investigate why and fix the gap.">
+      <div class="glyph">→</div>
+      <div class="text">No entries on the <em>guest register</em> since Apr 20.</div>
+    </div>
+    <div class="act-row" data-prompt="3 negative feedbacks came in yesterday 11pm–12am — pull them up and summarise the theme.">
+      <div class="glyph">→</div>
+      <div class="text">3 <em>negative feedbacks</em> received yesterday 11pm–12am.</div>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT NOW (hero card) — temporarily hidden ============ -->
+  <section class="sect reveal" hidden>
+    <div class="sect-head">
+      <span class="sect-label">Right now</span>
+    </div>
+    <a class="hero" href="pages/brief.html#live">
+      <div class="hero-eyebrow">Saturday · 9:42 PM</div>
+      <h1 class="hero-title">47 in. <em>33 regulars</em> back, 14 new.</h1>
+      <span class="hero-cta">See live feed</span>
+      <svg class="hero-glyph" viewBox="0 0 200 200" fill="none" stroke="rgba(232,223,206,0.55)" stroke-width="1.2" aria-hidden="true">
+        <circle class="ring ring-3" cx="100" cy="100" r="78"/>
+        <circle class="ring ring-2" cx="100" cy="100" r="56"/>
+        <circle class="ring ring-1" cx="100" cy="100" r="34"/>
+        <circle class="center-dot" cx="100" cy="100" r="6" fill="oklch(0.68 0.205 45)" stroke="none"/>
+      </svg>
+      <div class="hero-foot">
+        <span class="dot" aria-hidden="true"></span>
+        <span>LIVE · refreshed 12 sec ago</span>
+      </div>
+    </a>
+  </section>
+
+  <!-- ============ MANAGE (icon grid — moved up to sit directly below the live feed hero) ============ -->
+  <section class="sect reveal">
+    <div class="sect-head">
+      <span class="sect-label">Quick access</span>
+    </div>
+    <div class="icon-grid">
+      <a class="icon-tile" href="#" data-prompt="Open my menu — show me the items that are out of stock and the ones missing photos.">
+        <div class="icon-circle">
+          <!-- Lucide: utensils -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2"/>
+            <path d="M5 11v11"/>
+            <path d="M11 2v20"/>
+            <path d="M19 2c-1.7 0-3 1.3-3 3v8c0 .6.4 1 1 1h2"/>
+            <path d="M19 14v8"/>
+          </svg>
+        </div>
+        <span class="icon-label">menu</span>
+      </a>
+      <a class="icon-tile" href="#" data-prompt="Show me my posters — which are live, which expired, which are scheduled.">
+        <div class="icon-circle">
+          <!-- Lucide: image -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+        </div>
+        <span class="icon-label">posters</span>
+      </a>
+      <a class="icon-tile" href="#" data-prompt="Show me the events I have scheduled this week and next.">
+        <div class="icon-circle">
+          <!-- Lucide: calendar-days -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2v4"/>
+            <path d="M16 2v4"/>
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M3 10h18"/>
+            <path d="M8 14h.01"/>
+            <path d="M12 14h.01"/>
+            <path d="M16 14h.01"/>
+            <path d="M8 18h.01"/>
+            <path d="M12 18h.01"/>
+            <path d="M16 18h.01"/>
+          </svg>
+        </div>
+        <span class="icon-label">events</span>
+      </a>
+      <a class="icon-tile" href="pages/ops-service.html#valet">
+        <div class="icon-circle">
+          <!-- Lucide: car -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+        </div>
+        <span class="icon-label">valet</span>
+      </a>
+      <a class="icon-tile" href="#" data-prompt="Open the guest register — show me today's entries.">
+        <div class="icon-circle">
+          <!-- Lucide: clipboard-list -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <path d="M12 11h4"/>
+            <path d="M12 16h4"/>
+            <path d="M8 11h.01"/>
+            <path d="M8 16h.01"/>
+          </svg>
+        </div>
+        <span class="icon-label">guest register</span>
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ============ HOSPITALITY (icon grid — same pattern as Quick access) ============ -->
+  <section class="sect reveal">
+    <div class="sect-head">
+      <span class="sect-label">Hospitality</span>
+    </div>
+    <div class="icon-grid">
+      <a class="icon-tile" href="pages/loyalty-moments.html">
+        <div class="icon-circle">
+          <!-- Lucide: star -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <span class="icon-label">moments</span>
+      </a>
+      <a class="icon-tile" href="pages/loyalty-profile.html">
+        <div class="icon-circle">
+          <!-- Lucide: search -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+        </div>
+        <span class="icon-label">look up</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ GROWTH (icon grid) ============ -->
+  <section class="sect reveal">
+    <div class="sect-head">
+      <span class="sect-label">Growth</span>
+    </div>
+    <div class="icon-grid">
+      <a class="icon-tile" href="pages/insights.html">
+        <div class="icon-circle">
+          <!-- Lucide: bar-chart-3 -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 3v18h18"/>
+            <path d="M7 16V8"/>
+            <path d="M12 16v-5"/>
+            <path d="M17 16v-3"/>
+          </svg>
+        </div>
+        <span class="icon-label">insights</span>
+      </a>
+      <a class="icon-tile" href="pages/plays.html">
+        <div class="icon-circle">
+          <!-- Lucide: trending-up -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            <polyline points="16 7 22 7 22 13"/>
+          </svg>
+          <span class="soon-pill">Coming soon</span>
+        </div>
+        <span class="icon-label">grow revenue</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ OPERATIONS (icon grid) ============ -->
+  <section class="sect reveal">
+    <div class="sect-head">
+      <span class="sect-label">Operations</span>
+      <a class="view-all" href="pages/ops-reservations.html">view all
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+    <div class="icon-grid">
+      <a class="icon-tile" href="pages/ops-reservations.html">
+        <div class="icon-circle">
+          <!-- Lucide: calendar-check -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M16 2v4"/>
+            <path d="M8 2v4"/>
+            <path d="M3 10h18"/>
+            <path d="m9 16 2 2 4-4"/>
+          </svg>
+        </div>
+        <span class="icon-label">reservations</span>
+      </a>
+      <a class="icon-tile" href="pages/ops-staffing.html">
+        <div class="icon-circle">
+          <!-- Lucide: users -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <span class="icon-label">staffing</span>
+      </a>
+      <a class="icon-tile" aria-disabled="true" style="pointer-events: none;">
+        <div class="icon-circle">
+          <!-- Lucide: concierge-bell -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 20h18"/>
+            <path d="M20 16a8 8 0 1 0-16 0"/>
+            <path d="M12 4v4"/>
+            <path d="M10 4h4"/>
+          </svg>
+          <span class="soon-pill">Coming soon</span>
+        </div>
+        <span class="icon-label">service</span>
+      </a>
+    </div>
+  </section>
+  <!-- ============================================================
+       ANALYTICS — brief content, ported from pages/brief.html as
+       four chapter panes behind a sticky pill switcher (Visitors /
+       Register / Customers / Loyalty). Only one pane is visible at
+       a time; JS at the end of <body> handles swapping + ECharts
+       resize so charts in newly-visible panes draw at full width.
+       ============================================================ -->
+
+  <!-- Brief shell: -18px side margins cancel .pg's gutter so chapter
+       content (tabs, headline, KPI grid, charts) spans the full viewport
+       width, matching the end-to-end feel of brief.html. The compact
+       sticky header above replaces the main topbar when scrolled into
+       this section (see `.brief-stick-head` / `.show-stick` in CSS, and
+       the IntersectionObserver near the bottom of the page). -->
+  <div class="brief-shell" id="briefShell">
+
+  <!-- Sentinel: 1px probe just above the sticky block. When it exits the
+       top of the viewport, body gets `.brief-stuck` and the main topbar
+       slides up out of view. -->
+  <div class="brief-stick-sentinel" aria-hidden="true" style="height:1px"></div>
+
+  <!-- Sticky block — the Analytics label + chapter pills travel together as
+       the sticky header. -->
+  <div class="brief-stick-block">
+    <section class="headline reveal">
+      <div class="kicker">Analytics</div>
+    </section>
+
+    <nav class="brief-tabs reveal" id="briefTabs">
+      <a data-tab="visitors" class="active">Visitors</a>
+      <a data-tab="register">Guest register</a>
+      <a data-tab="customers">Customers</a>
+      <a data-tab="loyalty">Loyalty</a>
+    </nav>
+  </div>
+
+  <!-- ===== I · VISITORS OVERVIEW ===== -->
+  <div class="brief-tab active" data-tab="visitors">
+
+  <section class="chapter reveal">
+    <div class="kicker">I · Analytics</div>
+    <h2><span class="accent">Visitors</span> overview</h2>
+    <p class="deck">Lifetime footfall, verification, returning behaviour, weekly trend, and 7-day pattern.</p>
+  </section>
+
+  <div class="kpi-grid reveal">
+    <div class="kpi-cell">
+      <div class="kpi-label">Total visits<span class="kpi-sub">QR scans + guest register</span></div>
+      <div class="kpi-value">8,201</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Total verified visitors<span class="kpi-sub">QR + guest register</span></div>
+      <div class="kpi-value">3,940</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">VIP customers<span class="kpi-sub">5+ total visits ever</span></div>
+      <div class="kpi-value">7</div>
+    </div>
+    <div class="kpi-cell flag">
+      <div class="kpi-label">At risk<span class="kpi-sub">inactive 30+ days</span></div>
+      <div class="kpi-value">2,049</div>
+    </div>
+  </div>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Visits breakdown · new vs returning</div>
+      <div class="meta">3,940 verified</div>
+    </div>
+    <div class="split-row">
+      <div class="chart-box donut" id="chart-newret"></div>
+      <dl class="split-key">
+        <div><dt>New</dt><dd><span class="num">3,786</span><span class="pct">96.1%</span></dd></div>
+        <div class="hl"><dt>Returning</dt><dd><span class="num">154</span><span class="pct">3.9%</span></dd></div>
+      </dl>
+    </div>
+    <p class="caption"><span class="em">Returning is your gap.</span> Most visitors come once and never come back — focus retention efforts on the first 14 days post-visit.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Weekly trend · QR + guest register</div>
+      <div class="meta">16w</div>
+    </div>
+    <div class="dual-chart weekly">
+      <div class="dual-chart-yaxis"><div id="chart-weekly-y"></div></div>
+      <div class="dual-chart-bars"><div id="chart-weekly"></div></div>
+      <div class="drag-pill">Slide for earlier weeks</div>
+    </div>
+    <p class="caption"><span class="em">Apr 6 was the spike.</span> 1,107 entries — almost 3× the surrounding average. Worth checking what was on that week.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Daily visits · new vs returning</div>
+      <div class="meta">30d</div>
+    </div>
+    <div class="legend-chips">
+      <span class="chip"><i style="background: var(--cat-default);"></i>New visitor</span>
+      <span class="chip"><i style="background: var(--orange);"></i>Returning</span>
+    </div>
+    <div class="dual-chart">
+      <div class="dual-chart-yaxis"><div id="chart-daily-newret-y"></div></div>
+      <div class="dual-chart-bars"><div id="chart-daily-newret"></div></div>
+      <div class="drag-pill">Slide for earlier dates</div>
+    </div>
+    <p class="caption">Each bar is one night. <span class="em">Returning visits stay under 5%</span> any night — the orange topping is barely visible.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">How they came in · daily</div>
+      <div class="meta">30d</div>
+    </div>
+    <div class="legend-chips">
+      <span class="chip"><i style="background: var(--cat-default);"></i>QR scan</span>
+      <span class="chip"><i style="background: var(--blue);"></i>Walk-in + QR</span>
+      <span class="chip"><i style="background: var(--teal);"></i>Walk-in</span>
+      <span class="chip"><i style="background: var(--gold);"></i>Walk-in guests</span>
+    </div>
+    <div class="dual-chart">
+      <div class="dual-chart-yaxis"><div id="chart-daily-source-y"></div></div>
+      <div class="dual-chart-bars"><div id="chart-daily-source"></div></div>
+      <div class="drag-pill">Slide for earlier dates</div>
+    </div>
+    <p class="caption">QR scan dominates daily entries. <span class="em">Walk-in guests</span> spike on weekend nights — promoter activity.</p>
+  </section>
+
+  </div><!-- /tab visitors -->
+
+  <!-- ===== II · GUEST REGISTER ===== -->
+  <div class="brief-tab" data-tab="register">
+
+  <section class="chapter reveal">
+    <div class="kicker">II · Analytics</div>
+    <h2><span class="accent">Guest</span> register</h2>
+    <p class="deck">Walk-ins, table reservations, event entries, promoter guest lists, and crowd profile.</p>
+  </section>
+
+  <div class="kpi-grid kpi-grid-3 reveal">
+    <div class="kpi-cell flag">
+      <div class="kpi-label">Total entries<span class="kpi-sub">all-time</span></div>
+      <div class="kpi-value">4,899</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Walk-in guests<span class="kpi-sub">door entry</span></div>
+      <div class="kpi-value">4,889</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Reservation guests<span class="kpi-sub">booked tables</span></div>
+      <div class="kpi-value">10</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Guest list<span class="kpi-sub">promoter</span></div>
+      <div class="kpi-value">0</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Male entries<span class="kpi-sub">all-time</span></div>
+      <div class="kpi-value">3,028</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Female entries<span class="kpi-sub">all-time</span></div>
+      <div class="kpi-value">1,871</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Avg group size<span class="kpi-sub">per entry</span></div>
+      <div class="kpi-value">4.2</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Avg men<span class="kpi-sub">per entry</span></div>
+      <div class="kpi-value">2.6</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Avg women<span class="kpi-sub">per entry</span></div>
+      <div class="kpi-value">1.6</div>
+    </div>
+  </div>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Entry source breakdown</div>
+      <div class="meta">Total · 4,899</div>
+    </div>
+    <div class="chart-box tall" id="chart-source"></div>
+    <p class="caption">Half come <span class="em">direct</span>. Aggregators (Swiggy + Zomato) bring another third. <span class="em">VIP</span> at 11% is your house list.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Daily entries · gender × entry type</div>
+      <div class="meta">18d</div>
+    </div>
+    <div class="legend-chips">
+      <span class="chip"><i style="background: var(--m-walkin);"></i>Walk-in · M</span>
+      <span class="chip"><i style="background: var(--f-walkin);"></i>Walk-in · F</span>
+      <span class="chip"><i style="background: var(--m-reserve);"></i>Reservation · M</span>
+      <span class="chip"><i style="background: var(--f-reserve);"></i>Reservation · F</span>
+      <span class="chip"><i style="background: var(--m-guestlist);"></i>Guest list · M</span>
+      <span class="chip"><i style="background: var(--f-guestlist);"></i>Guest list · F</span>
+    </div>
+    <div class="dual-chart">
+      <div class="dual-chart-yaxis"><div id="chart-daily-gender-y"></div></div>
+      <div class="dual-chart-bars"><div id="chart-daily-gender" style="width:920px;height:200px;"></div></div>
+      <div class="drag-pill">Slide for earlier dates</div>
+    </div>
+    <p class="caption">Walk-in dominates. <span class="em">Reservation</span> and <span class="em">guest list</span> entries are rare — single digits per night.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Recent entries</div>
+      <div class="head-right">
+        <div class="meta">Today · 47</div>
+        <button class="export-btn">Export</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th class="first">Time</th><th>Name</th><th>Source</th><th class="num last">Pax</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank first">9:42</td><td class="name">Aarav Mehra</td><td class="tag">QR · 1st visit</td><td class="num last">+1</td></tr>
+          <tr><td class="rank first">9:38</td><td class="name">Priya Nair</td><td class="tag">Reservation</td><td class="num last">+4</td></tr>
+          <tr><td class="rank first">9:31</td><td class="name">Karan Kapoor</td><td class="tag">Walk-in · regular</td><td class="num last">+2</td></tr>
+          <tr><td class="rank first">9:24</td><td class="name">Riya Sharma</td><td class="tag">QR · returning</td><td class="num last">+1</td></tr>
+          <tr><td class="rank first">9:17</td><td class="name">Vikram Joshi</td><td class="tag">Guest list</td><td class="num last">+6</td></tr>
+          <tr><td class="rank first">9:09</td><td class="name">Ananya Iyer</td><td class="tag">Walk-in · 1st</td><td class="num last">+1</td></tr>
+          <tr><td class="rank first">9:02</td><td class="name">Rohan Desai</td><td class="tag">QR · regular</td><td class="num last">+3</td></tr>
+          <tr><td class="rank first">8:54</td><td class="name">Neha Bansal</td><td class="tag">QR · 1st visit</td><td class="num last">+2</td></tr>
+          <tr><td class="rank first">8:48</td><td class="name">Aditya Rao</td><td class="tag">Reservation</td><td class="num last">+5</td></tr>
+          <tr><td class="rank first">8:41</td><td class="name">Kabir Malhotra</td><td class="tag">Walk-in · regular</td><td class="num last">+2</td></tr>
+          <tr><td class="rank first">8:33</td><td class="name">Tanvi Pillai</td><td class="tag">QR · returning</td><td class="num last">+1</td></tr>
+          <tr><td class="rank first">8:25</td><td class="name">Arjun Saxena</td><td class="tag">Guest list</td><td class="num last">+3</td></tr>
+          <tr><td class="rank first">8:18</td><td class="name">Meera Krishnan</td><td class="tag">Walk-in · 1st</td><td class="num last">+1</td></tr>
+          <tr><td class="rank first">8:11</td><td class="name">Sahil Gupta</td><td class="tag">QR · regular</td><td class="num last">+4</td></tr>
+          <tr><td class="rank first">8:04</td><td class="name">Divya Menon</td><td class="tag">Reservation</td><td class="num last">+2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  </div><!-- /tab register -->
+
+  <!-- ===== III · CUSTOMER DATA ===== -->
+  <div class="brief-tab" data-tab="customers">
+
+  <section class="chapter reveal">
+    <div class="kicker">III · Data</div>
+    <h2><span class="accent">Customer</span> data</h2>
+    <p class="deck">Names, phones, and visit history of at-risk regulars, top customers, and new customers.</p>
+  </section>
+
+  <div class="kpi-grid kpi-grid-3 reveal">
+    <div class="kpi-cell flag">
+      <div class="kpi-label">30+ days dark<span class="kpi-sub">regulars idle</span></div>
+      <div class="kpi-value">23</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Frequency dropped<span class="kpi-sub">half their pace</span></div>
+      <div class="kpi-value">47</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">First-timers gone<span class="kpi-sub">never returned</span></div>
+      <div class="kpi-value">236</div>
+    </div>
+  </div>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">At-risk regulars</div>
+      <div class="head-right">
+        <div class="meta">15 · 30+ days dark</div>
+        <button class="export-btn">Export</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th class="first">#</th><th>Name</th><th>Mobile</th><th class="num">Visits</th><th>Last</th><th class="num last">Idle</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank first">01</td><td class="name">Lalu</td><td class="phone">+91 83399 91169</td><td class="num">3</td><td class="date">22 Mar</td><td class="flag last">41 d</td></tr>
+          <tr><td class="rank first">02</td><td class="name">ajit♥</td><td class="phone">+91 96925 35258</td><td class="num">3</td><td class="date">29 Mar</td><td class="flag last">34 d</td></tr>
+          <tr><td class="rank first">03</td><td class="name">Hemanth</td><td class="phone">+91 88972 50204</td><td class="num">3</td><td class="date">20 Mar</td><td class="flag last">43 d</td></tr>
+          <tr><td class="rank first">04</td><td class="name">beherasagar85200</td><td class="phone">+91 80934 99703</td><td class="num">3</td><td class="date">30 Mar</td><td class="flag last">33 d</td></tr>
+          <tr><td class="rank first">05</td><td class="name">Shiney</td><td class="phone">+91 79815 49253</td><td class="num">3</td><td class="date">28 Mar</td><td class="flag last">35 d</td></tr>
+          <tr><td class="rank first">06</td><td class="name">Naveen Kumar</td><td class="phone">+91 78912 34567</td><td class="num">2</td><td class="date">15 Mar</td><td class="flag last">48 d</td></tr>
+          <tr><td class="rank first">07</td><td class="name">Pooja Singh</td><td class="phone">+91 90123 45678</td><td class="num">4</td><td class="date">25 Mar</td><td class="flag last">38 d</td></tr>
+          <tr><td class="rank first">08</td><td class="name">Karthik R.</td><td class="phone">+91 91234 56789</td><td class="num">3</td><td class="date">18 Mar</td><td class="flag last">45 d</td></tr>
+          <tr><td class="rank first">09</td><td class="name">Anjali Devi</td><td class="phone">+91 92345 67891</td><td class="num">5</td><td class="date">22 Mar</td><td class="flag last">41 d</td></tr>
+          <tr><td class="rank first">10</td><td class="name">Rajesh Kumar</td><td class="phone">+91 93456 78912</td><td class="num">3</td><td class="date">12 Mar</td><td class="flag last">51 d</td></tr>
+          <tr><td class="rank first">11</td><td class="name">Meera</td><td class="phone">+91 94567 89123</td><td class="num">4</td><td class="date">27 Mar</td><td class="flag last">36 d</td></tr>
+          <tr><td class="rank first">12</td><td class="name">Vinod Reddy</td><td class="phone">+91 95678 91234</td><td class="num">3</td><td class="date">19 Mar</td><td class="flag last">44 d</td></tr>
+          <tr><td class="rank first">13</td><td class="name">Lakshmi P.</td><td class="phone">+91 96789 12345</td><td class="num">4</td><td class="date">23 Mar</td><td class="flag last">40 d</td></tr>
+          <tr><td class="rank first">14</td><td class="name">Suresh M.</td><td class="phone">+91 97891 23456</td><td class="num">3</td><td class="date">16 Mar</td><td class="flag last">47 d</td></tr>
+          <tr><td class="rank first">15</td><td class="name">Geetha</td><td class="phone">+91 98912 34567</td><td class="num">5</td><td class="date">31 Mar</td><td class="flag last">32 d</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Top customers</div>
+      <div class="head-right">
+        <div class="meta">Sorted by visits</div>
+        <button class="export-btn">Export</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th class="first">#</th><th>Name</th><th>Phone</th><th class="num">Visits</th><th>Last</th><th class="last">Segment</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank first">★</td><td class="name">SORREALEVENTS</td><td class="phone">+91 99890 37700</td><td class="num">3</td><td class="date">18 Apr</td><td class="tag returning last">returning</td></tr>
+          <tr><td class="rank first">★</td><td class="name">Shiney</td><td class="phone">+91 79815 49253</td><td class="num">3</td><td class="date">28 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">★</td><td class="name">Hemanth</td><td class="phone">+91 88972 50204</td><td class="num">3</td><td class="date">20 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">04</td><td class="name">Aish</td><td class="phone">+91 75692 80988</td><td class="num">2</td><td class="date">06 Apr</td><td class="tag returning last">returning</td></tr>
+          <tr><td class="rank first">05</td><td class="name">Naga Santoshi</td><td class="phone">+91 79891 97621</td><td class="num">2</td><td class="date">06 Apr</td><td class="tag returning last">returning</td></tr>
+          <tr><td class="rank first">06</td><td class="name">Kamal</td><td class="phone">+91 99492 11951</td><td class="num">2</td><td class="date">28 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">07</td><td class="name">Alekhya</td><td class="phone">+91 95055 41333</td><td class="num">2</td><td class="date">08 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">08</td><td class="name">Rayalu</td><td class="phone">+91 77021 62505</td><td class="num">2</td><td class="date">27 Feb</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">09</td><td class="name">◐⛓‍♂blessed</td><td class="phone">+91 99635 31755</td><td class="num">2</td><td class="date">13 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">10</td><td class="name">litu</td><td class="phone">+91 88500 75724</td><td class="num">2</td><td class="date">14 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">11</td><td class="name">Soumya Penmetssa</td><td class="phone">+91 97557 13166</td><td class="num">2</td><td class="date">17 Apr</td><td class="tag returning last">returning</td></tr>
+          <tr><td class="rank first">12</td><td class="name">SR</td><td class="phone">+91 94927 73574</td><td class="num">2</td><td class="date">28 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">13</td><td class="name">P Vijay Varmaa</td><td class="phone">+91 96115 55888</td><td class="num">2</td><td class="date">17 Apr</td><td class="tag returning last">returning</td></tr>
+          <tr><td class="rank first">14</td><td class="name">Lalu</td><td class="phone">+91 83399 91169</td><td class="num">3</td><td class="date">22 Mar</td><td class="tag risk last">at-risk</td></tr>
+          <tr><td class="rank first">15</td><td class="name">ajit♥</td><td class="phone">+91 96925 35258</td><td class="num">3</td><td class="date">29 Mar</td><td class="tag risk last">at-risk</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">New customers</div>
+      <div class="head-right">
+        <div class="meta">First visit this week</div>
+        <button class="export-btn">Export</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th class="first">#</th><th>Name</th><th>Phone</th><th class="last">First visit</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank first">01</td><td class="name">TK</td><td class="phone">+91 80196 08213</td><td class="date last">02 May</td></tr>
+          <tr><td class="rank first">02</td><td class="name">Sruthi</td><td class="phone">+91 85558 77712</td><td class="date last">02 May</td></tr>
+          <tr><td class="rank first">03</td><td class="name">Soumya Penmetssa</td><td class="phone">+91 97557 13166</td><td class="date last">01 May</td></tr>
+          <tr><td class="rank first">04</td><td class="name">P Vijay Varmaa</td><td class="phone">+91 96115 55888</td><td class="date last">01 May</td></tr>
+          <tr><td class="rank first">05</td><td class="name">Rayalu</td><td class="phone">+91 77021 62505</td><td class="date last">29 Apr</td></tr>
+          <tr><td class="rank first">06</td><td class="name">Aarav Mehra</td><td class="phone">+91 81234 56789</td><td class="date last">28 Apr</td></tr>
+          <tr><td class="rank first">07</td><td class="name">Riya Sharma</td><td class="phone">+91 82345 67891</td><td class="date last">28 Apr</td></tr>
+          <tr><td class="rank first">08</td><td class="name">Ananya Iyer</td><td class="phone">+91 83456 78912</td><td class="date last">27 Apr</td></tr>
+          <tr><td class="rank first">09</td><td class="name">Sahil Gupta</td><td class="phone">+91 84567 89123</td><td class="date last">27 Apr</td></tr>
+          <tr><td class="rank first">10</td><td class="name">Tanvi Pillai</td><td class="phone">+91 85678 91234</td><td class="date last">26 Apr</td></tr>
+          <tr><td class="rank first">11</td><td class="name">Divya Menon</td><td class="phone">+91 86789 12345</td><td class="date last">26 Apr</td></tr>
+          <tr><td class="rank first">12</td><td class="name">Arjun Saxena</td><td class="phone">+91 87891 23456</td><td class="date last">25 Apr</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  </div><!-- /tab customers -->
+
+  <!-- ===== IV · LOYALTY & GROWTH ===== -->
+  <div class="brief-tab" data-tab="loyalty">
+
+  <section class="chapter reveal">
+    <div class="kicker">IV · Signals</div>
+    <h2><span class="accent">Loyalty</span> &amp; growth</h2>
+    <p class="deck">How sticky your customers are, and how the venue is growing month over month.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Win-back trail</div>
+      <div class="meta">Last 4 weeks</div>
+    </div>
+    <div class="kpi-grid kpi-grid-3">
+      <div class="kpi-cell">
+        <div class="kpi-label">Win-backs sent<span class="kpi-sub">Apr 7 – May 4</span></div>
+        <div class="kpi-value">47</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">Returned in 14d<span class="kpi-sub">12 came back</span></div>
+        <div class="kpi-value" style="color: var(--positive);">25.5%</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-label">Avg spend on return<span class="kpi-sub">incl. comp</span></div>
+        <div class="kpi-value">₹1,920</div>
+      </div>
+    </div>
+    <p class="caption">At the current return rate, this week's <span class="em">23 dark regulars</span> ≈ 6 returns ≈ ₹11K recovered.</p>
+  </section>
+
+  <div class="kpi-grid kpi-grid-3 reveal">
+    <div class="kpi-cell">
+      <div class="kpi-label">Total regulars<span class="kpi-sub">2+ visits ever</span></div>
+      <div class="kpi-value">412</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Regulars lifetime<span class="kpi-sub">first → last visit</span></div>
+      <div class="kpi-value">5.2 mo</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Days between visits<span class="kpi-sub">avg time gap</span></div>
+      <div class="kpi-value">16</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">All-customer lifetime<span class="kpi-sub">incl. one-timers</span></div>
+      <div class="kpi-value">0.8 mo</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">QR scans · MoM<span class="kpi-sub">1,523 → 1,622</span></div>
+      <div class="kpi-value">+6.5%</div>
+    </div>
+    <div class="kpi-cell flag">
+      <div class="kpi-label">Guest register · MoM<span class="kpi-sub">567 → 294</span></div>
+      <div class="kpi-value">−48.1%</div>
+    </div>
+  </div>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Loyalty depth · retention by visit</div>
+      <div class="meta">3,841 customers</div>
+    </div>
+    <div class="chart-box" id="chart-loyalty"></div>
+    <p class="caption"><span class="em">73% visit only once.</span> Familiar (2–4) and Regular (5–9) cohorts shrink fast. VIPs (10+) are 7 people total.</p>
+  </section>
+
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Cumulative user growth</div>
+      <div class="meta">12 months</div>
+    </div>
+    <div class="legend-chips">
+      <span class="chip"><i style="background: var(--ink);"></i>QR scans</span>
+      <span class="chip"><i style="background: var(--orange);"></i>Guest register</span>
+    </div>
+    <div class="dual-chart weekly">
+      <div class="dual-chart-yaxis"><div id="chart-growth-y"></div></div>
+      <div class="dual-chart-bars"><div id="chart-growth"></div></div>
+      <div class="drag-pill">Slide for earlier months</div>
+    </div>
+    <p class="caption">Hockey stick at <span class="em">Mar 2026</span> — 11× jump month over month. QR scans drove the take-off; guest register followed.</p>
+  </section>
+
+  </div><!-- /tab loyalty -->
+
+  </div><!-- /brief-shell -->
+
+  <div class="pad-bottom"></div>
+</div>
+
+<!-- Chat dock + Live pill — pinned on every page -->
+<div class="chat-dock">
+  <div class="inner">
+    <a class="chat-input-wrap" href="pages/brief.html#chat">
+      <span class="prompt-mark">›</span>
+      <span class="placeholder">Ask Bash</span>
+      <span class="hint">⌘K</span>
+    </a>
+    <a class="live-launcher" href="pages/brief.html#live" aria-label="Open Live hospitality">
+      <span class="live-pulse"></span>
+      <span class="live-label">Live</span>
+      <span class="live-badge">3</span>
+    </a>
+  </div>
+</div>
+
+<!-- _shell.js auto-applies theme on load and exposes wireNeedsYou + reveal -->
+<script src="pages/_shell.js?v=ed17"></script>
+<script>
+  BashShell.wireNeedsYou();
+  BashShell.reveal();
+</script>
+
+<!-- ============================================================
+     BRIEF CHARTS — ported from pages/brief.html so the hub renders
+     the editorial brief inline. Theme constants → initAllCharts →
+     IntersectionObserver reveal → resize handler → dual-chart drag.
+     ============================================================ -->
+<script>
+(function () {
+  // Theme-dependent palette (let so we can swap on theme toggle)
+  let ink, ink2, ink3, paper, paper2, rule, rule2;
+  const orange     = '#e26a2c';
+  const blueCol    = '#6f90b5';
+  const tealCol    = '#5d8b88';
+  const plumCol    = '#8c6981';
+  const goldCol    = '#b89548';
+  const swiggyCol  = '#fc8019';
+  const zomatoCol  = '#e23744';
+  const eazyCol    = '#008b8b';
+  const purpleCol  = '#7c5fa3';
+  const catDefault = '#8a847d';
+  const mWalkin    = '#347DC1';
+  const mReserve   = '#01A6EA';
+  const mGuestList = '#76B6E2';
+  const fWalkin    = '#e75455';
+  const fReserve   = '#f08080';
+  const fGuestList = '#f7c0c0';
+
+  const baseFont = '"Geist Mono", ui-monospace, monospace';
+  const displayFont = '"Faustina", Georgia, serif';
+
+  function loadTheme() {
+    const isDark = document.documentElement.classList.contains('theme-dark');
+    if (isDark) {
+      ink = '#f0ede7'; ink2 = '#b5afa7'; ink3 = '#7a746d';
+      paper = '#1e1e1d'; paper2 = '#181817';
+      rule = '#2a2a2a'; rule2 = '#1f1f1f';
+    } else {
+      ink = '#2a2521'; ink2 = '#5e5853'; ink3 = '#8e8881';
+      paper = '#f7f4ee'; paper2 = '#f0ede7';
+      rule = '#d6d2cc'; rule2 = '#ebe8e3';
+    }
+  }
+  loadTheme();
+
+  // Pinned y-axis renderer (HTML labels next to the scrolling chart body)
+  function renderYAxis(containerId, max, interval, opts) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const top = (opts && opts.top !== undefined) ? opts.top : 12;
+    const bottom = (opts && opts.bottom !== undefined) ? opts.bottom : 22;
+    const height = (opts && opts.height !== undefined) ? opts.height : 200;
+    const chartHeight = height - top - bottom;
+    let html = '';
+    for (let v = max; v >= 0; v -= interval) {
+      const y = top + (1 - v / max) * chartHeight;
+      html += '<div class="ytick" style="top:' + y + 'px">' + v.toLocaleString() + '</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  function initAllCharts() {
+    if (typeof echarts === 'undefined') return;
+    const inkRgba = (a) => {
+      const r = parseInt(ink.slice(1,3),16), g = parseInt(ink.slice(3,5),16), b = parseInt(ink.slice(5,7),16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    };
+    const axisCommon = {
+      axisLine: { lineStyle: { color: ink, width: 1 } },
+      axisTick: { show: false },
+      axisLabel: { color: ink3, fontSize: 9, fontFamily: baseFont, fontWeight: 500 },
+      splitLine: { show: false }
+    };
+
+    // LOYALTY — horizontal bars
+    const loyaltyEl = document.getElementById('chart-loyalty');
+    if (loyaltyEl) echarts.init(loyaltyEl).setOption({
+      grid: { left: 80, right: 56, top: 4, bottom: 4 },
+      tooltip: { trigger: 'item', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'value', show: false, max: 2900 },
+      yAxis: {
+        type: 'category',
+        data: ['One-time', 'Familiar 2-4', 'Regular 5-9', 'VIP 10+'],
+        axisLine: { show: false }, axisTick: { show: false },
+        axisLabel: { color: ink, fontSize: 11, fontFamily: baseFont, fontWeight: 500 }
+      },
+      series: [{
+        type: 'bar',
+        data: [
+          { value: 2803, itemStyle: { color: ink3 } },
+          { value: 842, itemStyle: { color: ink2 } },
+          { value: 189, itemStyle: { color: ink } },
+          { value: 7, itemStyle: { color: goldCol } }
+        ],
+        barWidth: 16,
+        label: { show: true, position: 'right', color: ink, fontFamily: baseFont, fontSize: 11, fontWeight: 600, formatter: '{c}' }
+      }]
+    });
+
+    // ENTRY SOURCE BREAKDOWN — donut
+    const srcEl = document.getElementById('chart-source');
+    if (srcEl) echarts.init(srcEl).setOption({
+      tooltip: { trigger: 'item', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 }, formatter: '{b}: {d}%' },
+      title: {
+        text: '4,899', subtext: 'TOTAL', left: '28%', top: 'center',
+        textAlign: 'center', itemGap: 4,
+        textStyle: { fontFamily: 'Faustina', fontSize: 26, fontWeight: 600, color: ink },
+        subtextStyle: { fontFamily: 'Gilroy', fontSize: 9, fontWeight: 500, color: ink3, letterSpacing: 1 }
+      },
+      legend: {
+        orient: 'vertical', right: 4, top: 'center',
+        itemWidth: 8, itemHeight: 8, itemGap: 8,
+        formatter: function(name) {
+          const map = { 'Direct': '49.3%', 'Swiggy': '17.5%', 'Zomato': '17.2%', 'VIP': '10.9%', 'Party / Event': '1.9%', 'EazyDiner': '1.8%', 'Band / Artist': '1.4%' };
+          return '{n|' + name + '}  {p|' + map[name] + '}';
+        },
+        textStyle: {
+          rich: {
+            n: { fontFamily: displayFont, fontSize: 12, color: ink, fontWeight: 500 },
+            p: { fontFamily: baseFont, fontSize: 10, color: ink3 }
+          }
+        }
+      },
+      series: [{
+        type: 'pie', radius: ['56%', '78%'], center: ['28%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderColor: paper, borderWidth: 2 },
+        label: { show: false },
+        data: [
+          { value: 49.32, name: 'Direct',       itemStyle: { color: catDefault } },
+          { value: 17.51, name: 'Swiggy',       itemStyle: { color: swiggyCol } },
+          { value: 17.19, name: 'Zomato',       itemStyle: { color: zomatoCol } },
+          { value: 10.86, name: 'VIP',          itemStyle: { color: goldCol } },
+          { value: 1.92,  name: 'Party / Event', itemStyle: { color: purpleCol } },
+          { value: 1.82,  name: 'EazyDiner',    itemStyle: { color: eazyCol } },
+          { value: 1.39,  name: 'Band / Artist', itemStyle: { color: plumCol } }
+        ]
+      }]
+    });
+
+    // CUMULATIVE USER GROWTH — 12 months, scrollable
+    const growthMonths = ['Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'];
+    const growthQR = [20, 42, 68, 89, 110, 128, 141, 143, 144, 1667, 3289, 3427];
+    const growthGR = [10, 22, 35, 48, 55, 62, 72, 78, 80, 645, 939, 939];
+    renderYAxis('chart-growth-y', 3500, 500, { top: 28, bottom: 26 });
+    const growthEl = document.getElementById('chart-growth');
+    if (growthEl) echarts.init(growthEl).setOption({
+      grid: { left: 4, right: 24, top: 28, bottom: 26 },
+      tooltip: { trigger: 'axis', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'category', data: growthMonths, ...axisCommon, boundaryGap: false, axisLabel: { ...axisCommon.axisLabel, interval: 0 } },
+      yAxis: { type: 'value', max: 3500, interval: 500, ...axisCommon, axisLine: { show: false }, axisLabel: { show: false }, axisTick: { show: false } },
+      series: [
+        { name: 'QR scans', type: 'line', data: growthQR, smooth: true,
+          symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: ink, borderColor: paper, borderWidth: 2 },
+          lineStyle: { color: ink, width: 1.5 },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [ { offset: 0, color: inkRgba(0.16) }, { offset: 1, color: inkRgba(0) } ] } },
+          label: { show: true, position: 'top', color: ink, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: p => p.dataIndex >= 8 ? p.data.toLocaleString() : '' }
+        },
+        { name: 'Guest register', type: 'line', data: growthGR, smooth: true,
+          symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: orange, borderColor: paper, borderWidth: 2 },
+          lineStyle: { color: orange, width: 1.5 },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [ { offset: 0, color: 'rgba(226, 106, 44, 0.18)' }, { offset: 1, color: 'rgba(226, 106, 44, 0)' } ] } },
+          label: { show: true, position: 'bottom', color: orange, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: p => p.dataIndex >= 8 ? p.data.toLocaleString() : '' }
+        }
+      ]
+    });
+
+    // NEW VS RETURNING — donut
+    const newretEl = document.getElementById('chart-newret');
+    if (newretEl) echarts.init(newretEl).setOption({
+      tooltip: { trigger: 'item', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 }, formatter: '{b}: {c}%' },
+      series: [{
+        type: 'pie', radius: ['62%', '88%'], center: ['50%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderColor: paper, borderWidth: 2 },
+        label: { show: false },
+        data: [
+          { value: 96.1, name: 'New', itemStyle: { color: catDefault } },
+          { value: 3.9,  name: 'Returning', itemStyle: { color: orange } }
+        ]
+      }]
+    });
+
+    // WEEKLY TREND — 16 weeks line w/ peak marker
+    const weekLabels = ['Jan 12','Jan 19','Jan 26','Feb 2','Feb 9','Feb 16','Feb 23','Mar 2','Mar 9','Mar 16','Mar 23','Mar 30','Apr 6','Apr 13','Apr 20','Apr 27'];
+    const weekData = [198,312,421,387,502,698,612,543,489,438,521,422,1107,821,398,339];
+    const peakIndex = weekData.indexOf(Math.max(...weekData));
+    renderYAxis('chart-weekly-y', 1200, 200);
+    const weeklyEl = document.getElementById('chart-weekly');
+    if (weeklyEl) echarts.init(weeklyEl).setOption({
+      grid: { left: 4, right: 24, top: 28, bottom: 24 },
+      tooltip: { trigger: 'axis', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'category', data: weekLabels, ...axisCommon, boundaryGap: false, axisLabel: { ...axisCommon.axisLabel, interval: 0 } },
+      yAxis: { type: 'value', max: 1200, interval: 200, ...axisCommon, axisLine: { show: false }, axisLabel: { show: false }, axisTick: { show: false } },
+      series: [{
+        type: 'line', data: weekData, smooth: true,
+        symbol: 'circle', symbolSize: 6,
+        itemStyle: { color: ink, borderColor: paper, borderWidth: 2 },
+        lineStyle: { color: ink, width: 1.5 },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [ { offset: 0, color: inkRgba(0.16) }, { offset: 1, color: inkRgba(0) } ] } },
+        label: { show: true, position: 'top', color: ink, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: function(p){ return p.data.toLocaleString(); } },
+        markPoint: { data: [{ coord: [peakIndex, weekData[peakIndex]], symbol: 'circle', symbolSize: 9, itemStyle: { color: orange, borderColor: paper, borderWidth: 2 }, label: { show: false } }] }
+      }]
+    });
+
+    // DAILY · NEW VS RETURNING (30d stacked)
+    const dayLabels = ['Apr 3','Apr 4','Apr 5','Apr 6','Apr 7','Apr 8','Apr 9','Apr 10','Apr 11','Apr 12','Apr 13','Apr 14','Apr 15','Apr 16','Apr 17','Apr 18','Apr 19','Apr 20','Apr 21','Apr 22','Apr 23','Apr 24','Apr 25','Apr 26','Apr 27','Apr 28','Apr 29','Apr 30','May 1','May 2','May 3'];
+    const dailyNew    = [61,173,75,40,38,40,33,105,125,81,36,38,46,87,55,119,60,30,33,60,55,67,63,82,11,4,34,30,128,86,28];
+    const dailyReturn = [0,1,0,0,1,2,1,1,1,1,2,0,1,2,0,3,1,0,0,1,1,0,3,2,2,0,2,2,4,8,0];
+    renderYAxis('chart-daily-newret-y', 200, 50);
+    const dnr = document.getElementById('chart-daily-newret');
+    if (dnr) echarts.init(dnr).setOption({
+      grid: { left: 4, right: 16, top: 12, bottom: 22 },
+      tooltip: { trigger: 'axis', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'category', data: dayLabels, ...axisCommon, axisLabel: { ...axisCommon.axisLabel, interval: 0, rotate: 0 } },
+      yAxis: { type: 'value', max: 200, interval: 50, ...axisCommon, axisLine: { show: false }, axisLabel: { show: false }, axisTick: { show: false } },
+      series: [
+        { name: 'New', type: 'bar', stack: 'all', data: dailyNew, itemStyle: { color: catDefault }, barWidth: '50%' },
+        { name: 'Returning', type: 'bar', stack: 'all', data: dailyReturn, itemStyle: { color: orange },
+          label: { show: true, position: 'top', color: ink, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: (p) => (dailyNew[p.dataIndex] + dailyReturn[p.dataIndex]).toLocaleString() } }
+      ]
+    });
+
+    // DAILY ENTRIES BY SOURCE (30d stacked)
+    const srcQR     = [59,170,49,27,24,25,19,70,99,52,26,24,31,29,22,50,51,30,33,61,56,67,66,84,13,4,36,32,132,94,28];
+    const srcWalkQR = [0,0,15,13,0,0,0,16,14,14,0,0,0,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    const srcWalk   = [0,0,12,0,15,18,15,20,22,16,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    const srcWalkGst= [5,17,71,37,39,38,35,136,171,66,48,30,34,117,84,111,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    renderYAxis('chart-daily-source-y', 350, 50);
+    const dsr = document.getElementById('chart-daily-source');
+    if (dsr) echarts.init(dsr).setOption({
+      grid: { left: 4, right: 16, top: 12, bottom: 22 },
+      tooltip: { trigger: 'axis', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'category', data: dayLabels, ...axisCommon, axisLabel: { ...axisCommon.axisLabel, interval: 0, rotate: 0 } },
+      yAxis: { type: 'value', max: 350, interval: 50, ...axisCommon, axisLine: { show: false }, axisLabel: { show: false }, axisTick: { show: false } },
+      series: [
+        { name: 'QR scan',        type: 'bar', stack: 'all', data: srcQR,      itemStyle: { color: catDefault },     barWidth: '50%' },
+        { name: 'Walk-in + QR',   type: 'bar', stack: 'all', data: srcWalkQR,  itemStyle: { color: blueCol } },
+        { name: 'Walk-in',        type: 'bar', stack: 'all', data: srcWalk,    itemStyle: { color: tealCol } },
+        { name: 'Walk-in guests', type: 'bar', stack: 'all', data: srcWalkGst, itemStyle: { color: goldCol },
+          label: { show: true, position: 'top', color: ink, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: (p) => (srcQR[p.dataIndex] + srcWalkQR[p.dataIndex] + srcWalk[p.dataIndex] + srcWalkGst[p.dataIndex]).toLocaleString() } }
+      ]
+    });
+
+    // DAILY ENTRIES · GENDER × ENTRY TYPE (18d stacked)
+    const genderDayLabels = ['Apr 1','Apr 2','Apr 3','Apr 4','Apr 5','Apr 6','Apr 7','Apr 8','Apr 9','Apr 10','Apr 11','Apr 12','Apr 13','Apr 14','Apr 15','Apr 16','Apr 17','Apr 18'];
+    const walkM = [24,40,10,62,30,45,41,38,110,125,49,40,28,25,102,13,36,14];
+    const walkF = [18,10, 7,39,21, 9,15,12, 70, 93,51,23,17,26, 41,14,16,12];
+    const resM  = [ 0, 0, 0, 1, 0, 0, 1, 0,  2,  1, 0, 0, 0, 0,  1, 0, 0, 0];
+    const resF  = [ 0, 0, 0, 1, 0, 0, 1, 0,  2,  1, 0, 0, 0, 0,  1, 0, 0, 0];
+    const glM   = [ 0, 0, 0, 0, 0, 0, 0, 0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0];
+    const glF   = [ 0, 0, 0, 0, 0, 0, 0, 0,  0,  0, 0, 0, 0, 0,  0, 0, 0, 0];
+    renderYAxis('chart-daily-gender-y', 250, 50);
+    const dgn = document.getElementById('chart-daily-gender');
+    if (dgn) echarts.init(dgn).setOption({
+      grid: { left: 4, right: 16, top: 12, bottom: 22 },
+      tooltip: { trigger: 'axis', backgroundColor: ink, borderWidth: 0, textStyle: { color: paper, fontFamily: baseFont, fontSize: 11 } },
+      xAxis: { type: 'category', data: genderDayLabels, ...axisCommon, axisLabel: { ...axisCommon.axisLabel, interval: 0, rotate: 0 } },
+      yAxis: { type: 'value', max: 250, interval: 50, ...axisCommon, axisLine: { show: false }, axisLabel: { show: false }, axisTick: { show: false } },
+      series: [
+        { name: 'Walk-in · M',     type: 'bar', stack: 'all', data: walkM, itemStyle: { color: mWalkin },    barWidth: '50%' },
+        { name: 'Walk-in · F',     type: 'bar', stack: 'all', data: walkF, itemStyle: { color: fWalkin } },
+        { name: 'Reservation · M', type: 'bar', stack: 'all', data: resM,  itemStyle: { color: mReserve } },
+        { name: 'Reservation · F', type: 'bar', stack: 'all', data: resF,  itemStyle: { color: fReserve } },
+        { name: 'Guest list · M',  type: 'bar', stack: 'all', data: glM,   itemStyle: { color: mGuestList } },
+        { name: 'Guest list · F',  type: 'bar', stack: 'all', data: glF,   itemStyle: { color: fGuestList },
+          label: { show: true, position: 'top', color: ink, fontFamily: baseFont, fontSize: 10, fontWeight: 600, formatter: (p) => (walkM[p.dataIndex] + walkF[p.dataIndex] + resM[p.dataIndex] + resF[p.dataIndex] + glM[p.dataIndex] + glF[p.dataIndex]).toLocaleString() } }
+      ]
+    });
+  }
+  initAllCharts();
+
+  // Reveal-on-scroll for all .reveal elements (chapter sections fade up as
+  // they enter the viewport). Uses .in-view to match brief.html's class.
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in-view'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in-view'));
+  }
+
+  // ECharts resize on window resize
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.chart-box').forEach(el => {
+      const inst = echarts.getInstanceByDom(el);
+      if (inst) inst.resize();
+    });
+  });
+
+  // Dual-chart horizontal scroll: scroll to right (most-recent first), toggle
+  // edge fades, hide drag pill on real drag/touch/wheel interaction.
+  document.querySelectorAll('.dual-chart').forEach(wrap => {
+    const bars = wrap.querySelector('.dual-chart-bars');
+    if (!bars) return;
+    const update = () => {
+      const max = bars.scrollWidth - bars.clientWidth;
+      wrap.classList.toggle('scrolled', bars.scrollLeft > 4);
+      wrap.classList.toggle('at-end', bars.scrollLeft >= max - 4);
+    };
+    bars.addEventListener('scroll', update, { passive: true });
+    const markDragged = () => wrap.classList.add('dragged');
+    bars.addEventListener('mousedown', markDragged);
+    bars.addEventListener('touchstart', markDragged, { passive: true });
+    bars.addEventListener('wheel', markDragged, { passive: true });
+    requestAnimationFrame(() => { bars.scrollLeft = bars.scrollWidth; update(); });
+  });
+
+  // Brief sticky block — hide the main `.topbar` once the user scrolls into
+  // the brief section, so the editorial headline + tabs become the active
+  // header. Watches a 1px sentinel placed just above the sticky block;
+  // when the sentinel is above the viewport, body gets `.brief-stuck`.
+  const briefShellEl = document.getElementById('briefShell');
+  const sentinel = briefShellEl && briefShellEl.querySelector('.brief-stick-sentinel');
+  if (sentinel && 'IntersectionObserver' in window) {
+    const stickObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        const passed = !e.isIntersecting && e.boundingClientRect.top < 0;
+        document.body.classList.toggle('brief-stuck', passed);
+      });
+    }, { threshold: 0 });
+    stickObs.observe(sentinel);
+  }
+
+  // Brief tabs — click to swap visible chapter pane. ECharts inside hidden
+  // panes initialized at 0×0; resize them on first reveal so they paint
+  // at their final width. Scroll the section into view so the header +
+  // pills stay anchored at the top of the viewport on swap.
+  const nav = document.getElementById('briefTabs');
+  if (nav) {
+    const tabs = nav.querySelectorAll('a');
+    const panes = document.querySelectorAll('.brief-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const key = tab.dataset.tab;
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        panes.forEach(p => p.classList.toggle('active', p.dataset.tab === key));
+        requestAnimationFrame(() => {
+          const activePane = document.querySelector('.brief-tab.active');
+          activePane && activePane.querySelectorAll('[id^="chart-"]').forEach(el => {
+            const inst = echarts.getInstanceByDom(el);
+            if (inst) inst.resize();
+          });
+          // Land the user at the TOP of the newly-active chapter so they
+          // always start reading from the chapter's first KPI/section, not
+          // wherever they were scrolled in the previous chapter. The active
+          // pane's first child should sit immediately under the sticky
+          // brief block (headline + tabs).
+          const stickyBlock = document.querySelector('.brief-stick-block');
+          if (activePane && stickyBlock) {
+            const paneTop = activePane.getBoundingClientRect().top + window.scrollY;
+            const target = Math.max(0, paneTop - stickyBlock.offsetHeight);
+            window.scrollTo({ top: target, behavior: 'smooth' });
+          }
+        });
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

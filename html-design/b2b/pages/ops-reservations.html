@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Reservations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+</head>
+<body>
+<div class="device app-cards">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">V · Operations</div>
+    <h1>How <span class="accent">reservations</span> are going.</h1>
+    <p class="deck">Confirm rate, no-show patterns, party-size accuracy, tonight's bookings.</p>
+  </section>
+
+  <nav class="subtab-nav">
+    <a class="active" href="ops-reservations.html">Reservations</a>
+    <a href="ops-staffing.html">Staffing</a>
+    <a class="soon" aria-disabled="true">Service speed</a>
+  </nav>
+
+  <!-- TONIGHT'S BOOKINGS — operational top -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Tonight's bookings</div>
+      <div class="meta">14 tables · 47 pax</div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th class="first">Time</th><th>Name</th><th class="num">Pax</th><th class="last">Risk</th></tr></thead>
+        <tbody>
+          <tr><td class="rank first">8:00</td><td class="name">Aditya Rao</td><td class="num">5</td><td class="tag last">low</td></tr>
+          <tr><td class="rank first">8:30</td><td class="name">Priya Nair</td><td class="num">4</td><td class="tag last">low</td></tr>
+          <tr><td class="rank first">8:30</td><td class="name">Vikas Mehta</td><td class="num">2</td><td class="tag last risk">high · 2 no-shows</td></tr>
+          <tr><td class="rank first">9:00</td><td class="name">Divya Menon</td><td class="num">2</td><td class="tag last">low</td></tr>
+          <tr><td class="rank first">9:00</td><td class="name">Karan Khanna</td><td class="num">6</td><td class="tag last risk">high · group cancel last time</td></tr>
+          <tr><td class="rank first">9:30</td><td class="name">Riya Sharma</td><td class="num">2</td><td class="tag returning last">vip</td></tr>
+          <tr><td class="rank first">10:00</td><td class="name">Arjun Saxena</td><td class="num">4</td><td class="tag last">low</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="act-row" data-prompt="Send reminders to all 14 of tonight's reservations now." style="margin-top: var(--space-3);">
+      <div class="glyph">→</div>
+      <div class="text">Send <em>reminder</em> to all 14 tables now.</div>
+      <div class="arr">›</div>
+    </div>
+    <div class="act-row" data-prompt="Pre-confirm the 2 high-risk no-show tables tonight via WhatsApp.">
+      <div class="glyph">→</div>
+      <div class="text">Pre-confirm <em>2 high-risk tables</em> via WhatsApp.</div>
+      <div class="arr">›</div>
+    </div>
+  </section>
+
+</div>
+<script src="_shell.js?v=ed17"></script>
+<script>BashShell.mount();</script>
+</body>
+</html>

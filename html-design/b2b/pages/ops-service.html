@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Service speed & Valet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+<style>
+  /* Service speed is not live yet — the whole chapter is a coming-soon state. */
+  .coming-soon {
+    text-align: center;
+    padding: 16vh var(--space-5) var(--space-7);
+  }
+  .coming-soon .cs-kicker {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: var(--space-4);
+  }
+  .coming-soon .cs-title {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(40px, 12vw, 56px); line-height: 1.04;
+    letter-spacing: -0.025em; color: var(--ink);
+    margin-bottom: var(--space-3);
+  }
+  .coming-soon .cs-title .accent { color: var(--orange); font-style: italic; font-weight: 500; }
+  .coming-soon .cs-deck {
+    font-family: var(--display); font-size: 15px; line-height: 1.4;
+    color: var(--ink-2); max-width: 32ch; margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+<div class="device">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">V · Operations</div>
+    <h1>How fast you <span class="accent">serve</span>.</h1>
+    <p class="deck">Response times, escalations, review risks — plus valet waits and hourly load.</p>
+  </section>
+
+  <nav class="subtab-nav">
+    <a href="ops-reservations.html">Reservations</a>
+    <a href="ops-staffing.html">Staffing</a>
+    <a class="soon" aria-disabled="true">Service speed</a>
+  </nav>
+
+  <section class="coming-soon reveal">
+    <div class="cs-kicker">Service speed</div>
+    <h2 class="cs-title">Coming <span class="accent">soon</span>.</h2>
+    <p class="cs-deck">Response times, escalations, review risks, valet waits and hourly load — landing here shortly.</p>
+  </section>
+</div>
+<script src="_shell.js?v=ed17"></script>
+<script>BashShell.mount();</script>
+</body>
+</html>

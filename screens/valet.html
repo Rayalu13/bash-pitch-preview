@@ -1,0 +1,2142 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bash Valet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Bash Valet - design tokens lifted from app_color.dart + mockups */
+:root {
+  --bg: #0E0E10;
+  --bg-2: #151518;
+  --surface: #1A1A1E;
+  --surface-2: #202024;
+  --surface-3: #2A2A30;
+  --line: rgba(255,255,255,0.08);
+  --line-2: rgba(255,255,255,0.14);
+  --text: #F5F5F6;
+  --text-dim: #9A9AA3;
+  --text-mute: #6B6B74;
+
+  /* Brand - orange gradient from app_color.dart */
+  --orange: #FF8A3D;
+  --orange-2: #F83600;
+  --orange-grad: linear-gradient(135deg, #FF8A3D 0%, #F83600 100%);
+  --orange-tint: rgba(254,140,0,0.12);
+  --orange-tint-2: rgba(254,140,0,0.18);
+
+  /* Status colors */
+  --green: #4ADE80;      /* In Parking */
+  --green-tint: rgba(74,222,128,0.12);
+  --amber: #F5B638;      /* Needs details */
+  --amber-tint: rgba(245,182,56,0.12);
+  --blue: #5AA8FF;       /* Accepted / user */
+  --blue-tint: rgba(90,168,255,0.12);
+  --red: #EF4444;
+  --red-tint: rgba(239,68,68,0.12);
+
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+}
+
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  background: var(--bg);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  color: var(--text);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  overflow: hidden;
+}
+#root { width: 100%; height: 100%; }
+
+/* Scrollbar inside phone */
+.phone-scroll::-webkit-scrollbar { width: 0; }
+.phone-scroll { scrollbar-width: none; }
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+input, textarea { font-family: inherit; }
+
+/* Numeric - SF Mono-ish feel for plate/QR numbers */
+.mono { font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace; font-feature-settings: 'tnum','zero'; letter-spacing: -0.01em; }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* Unified "free key · collected manually" button - same treatment on every card */
+.free-key-btn {
+  margin-top: 8px;
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background 150ms, color 150ms;
+}
+.free-key-btn:hover { background: color-mix(in srgb, var(--surface-2) 70%, #000); color: var(--text); }
+.card-pending {
+  background: linear-gradient(180deg, rgba(255,138,61,0.10) 0%, rgba(255,138,61,0.03) 100%);
+  border: 1px solid rgba(255,138,61,0.35);
+  border-radius: var(--r-lg);
+}
+.card-accepted {
+  background: linear-gradient(180deg, rgba(90,168,255,0.10) 0%, rgba(90,168,255,0.03) 100%);
+  border: 1px solid rgba(90,168,255,0.32);
+  border-radius: var(--r-lg);
+}
+.card-ready {
+  background: linear-gradient(180deg, rgba(250,204,21,0.10) 0%, rgba(250,204,21,0.03) 100%);
+  border: 1px solid rgba(250,204,21,0.38);
+  border-radius: var(--r-lg);
+}
+.card-rejected {
+  background: linear-gradient(180deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%);
+  border: 1px solid rgba(239,68,68,0.30);
+  border-radius: var(--r-lg);
+}
+.card-parking {
+  background: linear-gradient(180deg, rgba(74,222,128,0.08) 0%, rgba(74,222,128,0.025) 100%);
+  border: 1px solid rgba(74,222,128,0.25);
+  border-radius: var(--r-lg);
+}
+.card-needs {
+  background: linear-gradient(180deg, rgba(245,182,56,0.10) 0%, rgba(245,182,56,0.03) 100%);
+  border: 1px solid rgba(245,182,56,0.35);
+  border-radius: var(--r-lg);
+}
+
+/* Pulse dot */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+.pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+/* Slide in from right */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-in { animation: slide-in 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in 220ms ease-out; }
+
+/* Sheet */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-up { animation: sheet-up 320ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes bg-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.bg-fade { animation: bg-fade 200ms ease-out; }
+
+/* Toast */
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, -10px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.toast-in { animation: toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+</head><body><div id="root"></div>
+<script type="text/babel" data-presets="react" data-source="data.jsx">
+// data.jsx - seed state matching ParkingRequestsList from the backend
+// Statuses from app_string.dart: Pending, Accepted, InParking, Arrived, Completed, Rejected
+
+const INITIAL_CARS = [
+  {
+    id: 1, carQrId: 10247, carNumber: 'KA-01-NM-3456',
+    status: 'Pending', notes: 'Owner said blue hatchback',
+    createdAt: Date.now() - 3 * 60 * 1000,
+    calledAt: Date.now() - 3 * 60 * 1000,
+  },
+  {
+    id: 2, carQrId: 10243, carNumber: 'KA-05-BH-0912',
+    status: 'Accepted', notes: 'VIP guest - handle with care',
+    createdAt: Date.now() - 8 * 60 * 1000,
+    acceptedAt: Date.now() - 30 * 1000,
+  },
+  {
+    id: 3, carQrId: 10245, carNumber: 'MH-14-LM-8901',
+    status: 'Pending', notes: '',
+    createdAt: Date.now() - 5 * 60 * 1000,
+    calledAt: Date.now() - 5 * 60 * 1000,
+  },
+  {
+    id: 4, carQrId: 10241, carNumber: 'TN-09-AC-3344',
+    status: 'Accepted', notes: '',
+    createdAt: Date.now() - 11 * 60 * 1000,
+    acceptedAt: Date.now() - 9 * 60 * 1000,
+  },
+  // Just-parked, needs car number
+  {
+    id: 5, carQrId: 10249, carNumber: '', status: 'InParking', notes: '',
+    createdAt: Date.now() - 40 * 1000, needsDetails: true,
+  },
+  // Rejected - still needs key freed
+  {
+    id: 41, carQrId: 10239, carNumber: 'HR-26-BK-0277',
+    status: 'Rejected', notes: '',
+    rejectReason: 'Busy - guest collecting manually',
+    createdAt: Date.now() - 7 * 60 * 1000,
+    rejectedAt: Date.now() - 1 * 60 * 1000,
+  },
+  {
+    id: 51, carQrId: 10253, carNumber: '', status: 'InParking', notes: '',
+    createdAt: Date.now() - 90 * 1000, needsDetails: true,
+  },
+  {
+    id: 52, carQrId: 10256, carNumber: '', status: 'InParking', notes: '',
+    createdAt: Date.now() - 3 * 60 * 1000, needsDetails: true,
+  },
+  { id: 6, carQrId: 10231, carNumber: 'MH-12-KD-1177', status: 'InParking', notes: 'Parked by service lane', createdAt: Date.now() - 22 * 60 * 1000 },
+  { id: 7, carQrId: 10228, carNumber: 'KA-09-NR-3412', status: 'InParking', notes: '', createdAt: Date.now() - 28 * 60 * 1000 },
+  { id: 8, carQrId: 10225, carNumber: 'TN-11-QZ-8837', status: 'InParking', notes: '', createdAt: Date.now() - 34 * 60 * 1000 },
+  { id: 9, carQrId: 10222, carNumber: 'DL-04-EX-2290', status: 'InParking', notes: '', createdAt: Date.now() - 42 * 60 * 1000 },
+  { id: 10, carQrId: 10219, carNumber: 'MH-01-PP-5521', status: 'InParking', notes: '', createdAt: Date.now() - 58 * 60 * 1000 },
+  { id: 11, carQrId: 10215, carNumber: 'KA-03-LK-7710', status: 'InParking', notes: '', createdAt: Date.now() - 64 * 60 * 1000 },
+  { id: 12, carQrId: 10211, carNumber: 'TN-09-AC-7845', status: 'InParking', notes: '', createdAt: Date.now() - 72 * 60 * 1000 },
+  { id: 13, carQrId: 10207, carNumber: 'KA-51-MM-1122', status: 'InParking', notes: '', createdAt: Date.now() - 80 * 60 * 1000 },
+  // Completed/done - still visible in history tail
+  { id: 14, carQrId: 10205, carNumber: 'GJ-01-AB-4411', status: 'Completed', notes: '', createdAt: Date.now() - 88 * 60 * 1000 },
+];
+
+// Available QR tags (unassigned)
+const AVAILABLE_TAGS = [
+  10250, 10251, 10252, 10253, 10254, 10255, 10256, 10257,
+  10258, 10259, 10260, 10261, 10262, 10263, 10264, 10265,
+  10266, 10267, 10268, 10269, 10270, 10271, 10272, 10273,
+  10274, 10275, 10276, 10277, 10278, 10279, 10280,
+];
+
+Object.assign(window, { INITIAL_CARS, AVAILABLE_TAGS });
+</script>
+<script type="text/babel" data-presets="react" data-source="primitives.jsx">
+// primitives.jsx - icons, chips, buttons, sheet, toast
+
+var { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+// ─── Icons ──────────────────────────────────────────────────
+const Icon = {
+  search: (p={}) => <svg width="16" height="16" viewBox="0 0 16 16" fill="none" {...p}><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/><path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  close: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  xCircle: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.4"/><path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  check: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M2 7.5l3.2 3.2L12 3.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  chevron: (p={}) => <svg width="8" height="14" viewBox="0 0 8 14" fill="none" {...p}><path d="M1 1l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  chevronDown: (p={}) => <svg width="12" height="8" viewBox="0 0 12 8" fill="none" {...p}><path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  arrowUp: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M7 11.5V2.5M3 6l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  arrowDown: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M7 2.5v9M3 8l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  back: (p={}) => <svg width="16" height="16" viewBox="0 0 16 16" fill="none" {...p}><path d="M10 3l-5 5 5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  edit: (p={}) => <svg width="13" height="13" viewBox="0 0 14 14" fill="none" {...p}><path d="M9 2.5l2.5 2.5M2 12l.6-2.3 7-7 2.5 2.5-7 7L2.9 12.4 2 12z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  key: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><circle cx="4" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M6.5 7h6M10.5 7v2M12.5 7v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+  bell: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M3 10c-.5 0-.8-.5-.5-.9L3.5 7.5V5.5a3.5 3.5 0 117 0v2l1 1.6c.3.4 0 .9-.5.9H3zM5.5 11.5c.3.7 1 1 1.5 1s1.2-.3 1.5-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  hand: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M4 6V3a1 1 0 012 0v3M6 6V2.5a1 1 0 012 0V6M8 6V3.5a1 1 0 012 0V7M10 6.5V5a1 1 0 012 0v4c0 2.5-2 4-4.5 4S3 11.5 3 9.5V7a1 1 0 012 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  queue: (p={}) => <svg width="18" height="18" viewBox="0 0 18 18" fill="none" {...p}><path d="M3 5h12M3 9h12M3 13h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  scan: (p={}) => <svg width="18" height="18" viewBox="0 0 18 18" fill="none" {...p}><path d="M3 6V4a1 1 0 011-1h2M15 6V4a1 1 0 00-1-1h-2M3 12v2a1 1 0 001 1h2M15 12v2a1 1 0 01-1 1h-2M6 9h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  keyNav: (p={}) => <svg width="18" height="18" viewBox="0 0 18 18" fill="none" {...p}><circle cx="6" cy="9" r="3" stroke="currentColor" strokeWidth="1.6"/><path d="M9 9h6M13 9v2.5M15 9v2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  profile: (p={}) => <svg width="18" height="18" viewBox="0 0 18 18" fill="none" {...p}><circle cx="9" cy="6.5" r="2.8" stroke="currentColor" strokeWidth="1.6"/><path d="M3.5 15c1-2.8 3.2-4 5.5-4s4.5 1.2 5.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  note: (p={}) => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" {...p}><path d="M2 2.5a1 1 0 011-1h6a1 1 0 011 1V7l-2 3H3a1 1 0 01-1-1V2.5zM3.5 4h5M3.5 6h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  timer: (p={}) => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" {...p}><circle cx="6" cy="7" r="4" stroke="currentColor" strokeWidth="1.4"/><path d="M6 5v2l1.3 1M5 1h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+  flash: (p={}) => <svg width="12" height="14" viewBox="0 0 12 14" fill="none" {...p}><path d="M7 1L2 8h3l-1 5 5-7H6l1-5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none"/></svg>,
+  filter: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M2 3h10M4 7h6M6 11h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  plus: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  dots: (p={}) => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" {...p}><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="11" cy="7" r="1.2" fill="currentColor"/></svg>,
+};
+
+// ─── Status chip ───────────────────────────────────────────
+function StatusChip({ status }) {
+  const map = {
+    Pending:    { label: 'Calling Car',   color: '#FF8A3D', bg: 'transparent' },
+    Accepted:   { label: 'Accepted',      color: '#5AA8FF', bg: 'transparent' },
+    InParking:  { label: 'In Parking',    color: '#4ADE80', bg: 'transparent' },
+    Arrived:    { label: 'Car Ready',     color: '#FACC15', bg: 'transparent' },
+    Completed:  { label: 'Completed',     color: '#9A9AA3', bg: 'transparent' },
+    Rejected:   { label: 'Rejected',      color: '#EF4444', bg: 'transparent' },
+    NeedsDetails:{label:'Needs Details',  color: '#F5B638', bg: 'transparent' },
+  };
+  const v = map[status] || map.Pending;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      fontSize: 10.5, fontWeight: 700, letterSpacing: 0.7, textTransform: 'uppercase',
+      color: v.color,
+    }}>
+      {v.label}
+    </span>
+  );
+}
+
+// ─── Buttons ────────────────────────────────────────────────
+function PrimaryBtn({ children, onClick, icon, style={}, kind='solid' }) {
+  const base = {
+    height: 44, borderRadius: 12, padding: '0 16px',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    fontSize: 14.5, fontWeight: 600, letterSpacing: -0.01,
+    transition: 'transform 120ms, filter 120ms',
+    whiteSpace: 'nowrap',
+  };
+  const kinds = {
+    solid: { background: 'var(--orange)', color: '#fff', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14)' },
+    ghost: { background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--line)' },
+    danger: { background: 'transparent', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' },
+    success: { background: '#5BE39A', color: '#0A1810', boxShadow: '0 4px 14px rgba(74,222,128,0.22), inset 0 1px 0 rgba(255,255,255,0.3)' },
+    outline: { background: 'transparent', color: 'var(--text)', border: '1px solid var(--line-2)' },
+    ready: { background: '#FACC15', color: '#1A1608', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' },
+    blue: { background: '#5AA8FF', color: '#0A1220', boxShadow: '0 4px 14px rgba(90,168,255,0.25), inset 0 1px 0 rgba(255,255,255,0.3)' },
+  };
+  return (
+    <button onClick={onClick} style={{ ...base, ...kinds[kind], ...style }}
+      onMouseDown={e=>e.currentTarget.style.transform='scale(0.97)'}
+      onMouseUp={e=>e.currentTarget.style.transform='scale(1)'}
+      onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+      {icon}{children}
+    </button>
+  );
+}
+
+// ─── Tab segment (Outgoing / Incoming) ──────────────────────
+function Segment({ options, value, onChange }) {
+  return (
+    <div style={{
+      display: 'flex', padding: 4, background: 'var(--surface)',
+      borderRadius: 12, border: '1px solid var(--line)',
+      gap: 2,
+    }}>
+      {options.map(o => {
+        const active = o.value === value;
+        return (
+          <button key={o.value} onClick={()=>onChange(o.value)}
+            style={{
+              flex: 1, height: 38, borderRadius: 9,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              background: active ? '#fff' : 'transparent',
+              color: active ? '#000' : 'var(--text-dim)',
+              fontSize: 13.5, fontWeight: 600, letterSpacing: -0.01,
+              transition: 'all 180ms',
+              boxShadow: active ? '0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.4)' : 'none',
+            }}>
+            {o.icon}{o.label}
+            {o.count !== undefined && (
+              <span style={{
+                background: active ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+                color: active ? '#000' : 'var(--text-dim)',
+                padding: '1px 7px', borderRadius: 10, fontSize: 11.5, fontWeight: 700,
+              }} className="num">{o.count}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Sheet ──────────────────────────────────────────────────
+function Sheet({ open, onClose, children, maxHeight }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 100, overflow: 'hidden', borderRadius: 'inherit' }}>
+      <div className="bg-fade" onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(4px)',
+      }}/>
+      <div className="sheet-up" style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        background: 'var(--bg-2)', borderRadius: '22px 22px 0 0',
+        border: '1px solid var(--line)', borderBottom: 'none',
+        maxHeight: maxHeight || '80%', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 2px' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.18)' }}/>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Toast ──────────────────────────────────────────────────
+function Toast({ toast }) {
+  if (!toast) return null;
+  const colorMap = {
+    success: '#4ADE80', info: '#5AA8FF', error: '#EF4444', warn: '#F5B638',
+  };
+  return (
+    <div className="toast-in" style={{
+      position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 200,
+      background: 'rgba(22,22,26,0.95)', backdropFilter: 'blur(16px)',
+      border: '1px solid var(--line-2)',
+      borderRadius: 12, padding: '10px 14px',
+      display: 'flex', alignItems: 'center', gap: 10,
+      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+      maxWidth: 'calc(100% - 32px)',
+    }}>
+      <span style={{ width: 8, height: 8, borderRadius: 10, background: colorMap[toast.kind] || '#fff', boxShadow: `0 0 10px ${colorMap[toast.kind]}` }}/>
+      <span style={{ fontSize: 13.5, fontWeight: 500 }}>{toast.msg}</span>
+    </div>
+  );
+}
+
+// ─── Relative time ──────────────────────────────────────────
+function relTime(ts) {
+  const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (sec < 30) return 'just now';
+  if (sec < 60) return `${sec}s ago`;
+  const m = Math.floor(sec / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
+function elapsedMin(ts) {
+  const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m`;
+}
+
+// Live clock hook - re-renders every second for elapsed timers
+function useTick(interval = 1000) {
+  const [, setT] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setT(x => x + 1), interval);
+    return () => clearInterval(i);
+  }, [interval]);
+}
+
+// ─── Structured India plate input: XX-00-XX-0000 ──────────
+function PlateInput({ value, onChange, accent = 'rgba(245,182,56,0.4)' }) {
+  // Parse incoming value (with/without dashes) into 4 segments
+  const parse = (v) => {
+    const clean = (v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return [
+      clean.slice(0, 2),          // state: 2 letters
+      clean.slice(2, 4),          // district: 2 digits
+      clean.slice(4, 6),          // series: 1-2 letters
+      clean.slice(6, 10),         // number: up to 4 digits
+    ];
+  };
+  const segs = parse(value);
+  const refs = [useRef(), useRef(), useRef(), useRef()];
+  const MAX = [2, 2, 2, 4];
+  const TYPE = ['A', '0', 'A', '0']; // A=letters 0=digits
+
+  const sanitize = (s, kind, max) => {
+    const up = s.toUpperCase();
+    const filtered = kind === 'A' ? up.replace(/[^A-Z]/g, '') : up.replace(/[^0-9]/g, '');
+    return filtered.slice(0, max);
+  };
+
+  const setSeg = (idx, raw) => {
+    const clean = sanitize(raw, TYPE[idx], MAX[idx]);
+    const next = [...segs];
+    next[idx] = clean;
+    onChange(next.join('-').replace(/-+$/, '').replace(/(-[A-Z0-9]+)(?=-)/g, m => m));
+    // rebuild join: only join non-empty; but keep format for validation
+    const joined = [next[0], next[1], next[2], next[3]]
+      .map(s => s)
+      .filter((s, i, a) => s || a.slice(i+1).some(Boolean))
+      .join('-');
+    onChange(joined);
+    // auto-advance
+    if (clean.length === MAX[idx] && idx < 3) refs[idx + 1].current?.focus();
+  };
+
+  const onKeyDown = (idx) => (e) => {
+    if (e.key === 'Backspace' && !segs[idx] && idx > 0) {
+      refs[idx - 1].current?.focus();
+    }
+  };
+
+  const cellStyle = (active, filled) => ({
+    height: 56, padding: '0 8px',
+    background: 'var(--bg-2)',
+    border: '1.5px solid ' + (filled ? accent : 'var(--line)'),
+    borderRadius: 10, outline: 'none',
+    textAlign: 'center',
+    color: 'var(--text)',
+    fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+    fontSize: 22, fontWeight: 800, letterSpacing: 1,
+    transition: 'border 140ms',
+    minWidth: 0,
+  });
+
+  const PLACEHOLDERS = ['KA', '01', 'NM', '3456'];
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr 1.6fr',
+      gap: 6,
+    }}>
+      {segs.map((seg, i) => (
+        <input
+          key={i}
+          ref={refs[i]}
+          value={seg}
+          onChange={e => setSeg(i, e.target.value)}
+          onKeyDown={onKeyDown(i)}
+          placeholder={PLACEHOLDERS[i]}
+          maxLength={MAX[i]}
+          inputMode={TYPE[i] === '0' ? 'numeric' : 'text'}
+          autoCapitalize="characters"
+          style={cellStyle(false, !!seg)}
+        />
+      ))}
+    </div>
+  );
+}
+
+Object.assign(window, {
+  Icon, StatusChip, PrimaryBtn, Segment, Sheet, Toast, PlateInput,
+  relTime, elapsedMin, useTick,
+});
+</script>
+<script type="text/babel" data-presets="react" data-source="queue.jsx">
+// queue.jsx - Queue screen with Outgoing (retrieval) / Incoming (just parked) tabs
+
+var { useState, useEffect } = React;
+
+const QueueScreen = ({ cars, setCars, showToast, openCarEdit, setActiveNav }) => {
+  const [tab, setTab] = useState('outgoing');      // outgoing | incoming
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('wait');        // wait | recent
+  const [busyHours, setBusyHours] = useState(false);
+  // No global tick - the WaitTimer component below self-ticks only the minute number
+
+  const outgoing = cars.filter(c => c.status === 'Pending' || c.status === 'Accepted' || c.status === 'Arrived' || c.status === 'Rejected');
+  const incoming = cars.filter(c => c.status === 'InParking');
+  const pendingCount = cars.filter(c => c.status === 'Pending').length;
+  const rejectedCount = cars.filter(c => c.status === 'Rejected').length;
+  const inParkingCount = cars.filter(c => c.status === 'InParking').length;
+
+  const list = (tab === 'outgoing' ? outgoing : incoming).filter(c => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return String(c.carQrId).includes(q) || (c.carNumber || '').toLowerCase().includes(q);
+  });
+
+  // Sort
+  const sorted = [...list].sort((a, b) => {
+    if (tab === 'outgoing') {
+      // Pending first (waiting), then Accepted, then Arrived, then Rejected (still needs key-free)
+      const rank = (s) => s === 'Pending' ? 0 : s === 'Accepted' ? 1 : s === 'Arrived' ? 2 : 3;
+      if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
+      // longest-wait (oldest first) vs newest (most recent first)
+      return sort === 'recent' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt;
+    } else {
+      // Incoming: needs-details first
+      if (!!a.needsDetails !== !!b.needsDetails) return a.needsDetails ? -1 : 1;
+      return sort === 'recent' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt;
+    }
+  });
+
+  // Mutations - 1:1 with backend endpoints
+  const patchCar = (id, patch) => setCars(cs => cs.map(c => c.id === id ? { ...c, ...patch } : c));
+
+  const onAccept = (c) => {
+    patchCar(c.id, { status: 'Accepted', acceptedAt: Date.now() });
+    showToast({ kind: 'success', msg: `#${c.carQrId} accepted - retrieving` });
+  };
+  const onReject = (c) => {
+    patchCar(c.id, { status: 'Rejected', rejectedAt: Date.now(), rejectReason: c.rejectReason || null });
+    showToast({ kind: 'warn', msg: `#${c.carQrId} rejected` });
+  };
+  const onNotify = (c) => {
+    patchCar(c.id, { status: 'Arrived' });
+    showToast({ kind: 'success', msg: `Guest notified for #${c.carQrId}` });
+  };
+  const onHandedOver = (c) => {
+    patchCar(c.id, { status: 'Completed' });
+    showToast({ kind: 'success', msg: `#${c.carQrId} handed over` });
+  };
+  const onFreeKey = (c) => {
+    patchCar(c.id, { status: 'Completed' });
+    showToast({ kind: 'info', msg: `Key #${c.carQrId} freed` });
+  };
+  const onSaveDetails = (id, carNumber, notes) => {
+    patchCar(id, { carNumber, notes, needsDetails: false });
+    showToast({ kind: 'success', msg: 'Details saved' });
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
+      {/* Header */}
+      <div style={{ padding: '14px 18px 10px', background: 'var(--bg)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 7, height: 7, borderRadius: 10, background: 'var(--orange)', boxShadow: '0 0 10px var(--orange)' }} className="pulse"/>
+              <div style={{ fontSize: 15.5, fontWeight: 700, letterSpacing: -0.01 }}>KOMPOUND VALET</div>
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 2 }}>Saturday, 18 April · 9:41 PM</div>
+          </div>
+          <button onClick={()=>setBusyHours(v=>!v)} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '6px 6px 6px 12px', borderRadius: 20,
+            background: busyHours ? 'var(--orange-tint)' : 'var(--surface-2)',
+            border: '1px solid ' + (busyHours ? 'rgba(254,140,0,0.3)' : 'var(--line)'),
+            fontSize: 11.5, color: busyHours ? 'var(--orange)' : 'var(--text-dim)', fontWeight: 600,
+          }}>
+            Busy Hours
+            <span style={{
+              width: 28, height: 16, borderRadius: 10,
+              background: busyHours ? 'var(--orange)' : 'rgba(255,255,255,0.15)',
+              position: 'relative', transition: 'background 180ms',
+            }}>
+              <span style={{
+                position: 'absolute', top: 2, left: busyHours ? 14 : 2,
+                width: 12, height: 12, borderRadius: 10, background: '#fff',
+                transition: 'left 180ms',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
+              }}/>
+            </span>
+          </button>
+        </div>
+
+        {/* Tab pill switcher */}
+        <div style={{
+          display: 'flex', padding: 4, marginBottom: 12,
+          background: '#0F0F12', borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <TabPill
+            active={tab==='outgoing'}
+            onClick={()=>setTab('outgoing')}
+            icon={<Icon.arrowUp/>}
+            label="Outgoing"
+            count={pendingCount + cars.filter(c=>c.status==='Accepted').length + rejectedCount}
+            alert={pendingCount > 0 ? `${pendingCount} waiting` : null}
+            activeBg="#2A2A30"
+            activeColor="#FFFFFF"
+            alertColor="var(--orange)"
+            alertColorInactive="var(--orange)"
+          />
+          <TabPill
+            active={tab==='incoming'}
+            onClick={()=>setTab('incoming')}
+            icon={<Icon.arrowDown/>}
+            label="In Parking"
+            count={inParkingCount}
+            alert={cars.filter(c=>c.needsDetails).length > 0 ? `${cars.filter(c=>c.needsDetails).length} need details` : null}
+            activeBg="#2A2A30"
+            activeColor="#FFFFFF"
+            alertColor="#F5B638"
+            alertColorInactive="#F5B638"
+          />
+        </div>
+
+        {/* Search */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '0 14px', height: 40,
+          background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--line)',
+        }}>
+          <span style={{ color: 'var(--text-mute)' }}><Icon.search/></span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by QR or plate"
+            style={{
+              flex: 1, background: 'none', border: 'none', outline: 'none',
+              color: 'var(--text)', fontSize: 14, fontWeight: 500,
+            }}/>
+          {search && <button onClick={()=>setSearch('')} style={{ color: 'var(--text-mute)' }}><Icon.close/></button>}
+        </div>
+      </div>
+
+      {/* List body */}
+      <div className="phone-scroll" style={{ flex: 1, overflow: 'auto', padding: '0 14px 120px' }}>
+        {/* Section title */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 4px 10px' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.01 }}>
+            {tab === 'outgoing' ? 'Cars requested' : 'In parking lot'}
+            <span style={{ color: 'var(--text-mute)', fontWeight: 500 }}> · {sorted.length}</span>
+          </div>
+          {tab === 'outgoing' ? (
+            <button onClick={()=>setSort(s=>s==='recent'?'wait':'recent')} style={{ display:'flex', alignItems:'center', gap: 5, fontSize: 11.5, color: 'var(--text-dim)', background: 'var(--surface)', border: '1px solid var(--line)', padding: '5px 9px', borderRadius: 8 }}>
+              <span style={{ color: 'var(--orange)' }}><Icon.timer/></span>
+              {sort === 'recent' ? 'Newest first' : 'Longest wait'}
+              <Icon.chevronDown style={{ color: 'var(--text-mute)' }}/>
+            </button>
+          ) : (
+            <button onClick={()=>setSort(s=>s==='recent'?'wait':'recent')} style={{ display:'flex', alignItems:'center', gap: 4, fontSize: 11.5, color: 'var(--text-dim)', background: 'var(--surface)', border: '1px solid var(--line)', padding: '5px 9px', borderRadius: 8 }}>
+              {sort === 'recent' ? 'Newest first' : 'Oldest first'}
+              <Icon.chevronDown style={{ color: 'var(--text-mute)' }}/>
+            </button>
+          )}
+        </div>
+
+        {sorted.length === 0 ? (
+          <EmptyState tab={tab}/>
+        ) : (
+          sorted.map(c => (
+            tab === 'outgoing'
+              ? (c.status === 'Rejected'
+                  ? <RejectedCard key={c.id} car={c} onFreeKey={()=>onFreeKey(c)}/>
+                  : <OutgoingCard key={c.id} car={c}
+                      onAccept={()=>onAccept(c)} onReject={()=>onReject(c)}
+                      onNotify={()=>onNotify(c)} onHandedOver={()=>onHandedOver(c)}
+                      onFreeKey={()=>onFreeKey(c)} onEdit={()=>openCarEdit(c)}/>)
+              : <IncomingCard key={c.id} car={c}
+                  onSave={(cn, n)=>onSaveDetails(c.id, cn, n)}
+                  onEdit={()=>openCarEdit(c)} onFreeKey={()=>onFreeKey(c)}/>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Tab pill (Outgoing / Incoming switcher) ─────────────────
+function TabPill({ active, onClick, icon, label, count, alert, activeBg, activeColor, alertColor, alertColorInactive }) {
+  return (
+    <button onClick={onClick} style={{
+      flex: 1, position: 'relative',
+      padding: '10px 14px', borderRadius: 11,
+      background: active ? activeBg : 'transparent',
+      color: active ? activeColor : 'rgba(255,255,255,0.38)',
+      transition: 'all 180ms',
+      display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1,
+      boxShadow: active ? '0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.06)' : 'none',
+      opacity: active ? 1 : 0.85,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%' }}>
+        <span style={{ opacity: active ? 1 : 0.6 }}>{icon}</span>
+        <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.01 }}>{label}</span>
+        <span style={{ color: active ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)', fontSize: 13, fontWeight: 600 }}>·</span>
+        <span className="num" style={{
+          fontSize: 15, fontWeight: 800, letterSpacing: -0.02,
+          color: active ? activeColor : 'rgba(255,255,255,0.5)',
+        }}>{count}</span>
+      </div>
+      {alert && (
+        <div style={{
+          marginLeft: 23, marginTop: 2,
+          fontSize: 11, fontWeight: 700,
+          color: active ? alertColor : alertColorInactive,
+          display: 'flex', alignItems: 'center', gap: 5,
+        }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: 10,
+            background: active ? alertColor : alertColorInactive,
+            boxShadow: `0 0 6px ${active ? alertColor : alertColorInactive}`,
+          }} className="pulse"/>
+          {alert}
+        </div>
+      )}
+    </button>
+  );
+}
+
+// Self-ticking wait indicator - only this subtree re-renders each minute
+function WaitTime({ ts }) {
+  const [, setT] = useState(0);
+  useEffect(() => {
+    // Tick once per minute - display is minute-granular, no flicker
+    const i = setInterval(() => setT(x => x + 1), 15000);
+    return () => clearInterval(i);
+  }, []);
+  const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  const min = Math.floor(sec / 60);
+  const label = min >= 1 ? `${min} MIN` : `${sec} SEC`;
+  return (
+    <span className="num" style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5, color: 'var(--orange)' }}>
+      {label}
+    </span>
+  );
+}
+
+// ─── Outgoing card: Pending + Accepted + Arrived ─────────────
+function OutgoingCard({ car, onAccept, onReject, onNotify, onHandedOver, onFreeKey, onEdit }) {
+  const isPending  = car.status === 'Pending';
+  const isAccepted = car.status === 'Accepted';
+  const isArrived  = car.status === 'Arrived';
+
+  const Shell = ({ children }) => (
+    <div className={'fade-in ' + (isPending ? 'card-pending' : isArrived ? 'card-ready' : 'card-accepted')}
+      style={{ marginBottom: 12, padding: 14 }}>
+      {children}
+    </div>
+  );
+
+  return (
+    <Shell>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <StatusChip status={car.status}/>
+        <div style={{ textAlign: 'right' }}>
+          {isPending && <WaitTime ts={car.calledAt || car.createdAt}/>}
+          {isAccepted && (
+            <span className="num" style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5, color: 'var(--blue)' }}>
+              {elapsedMin(car.acceptedAt || car.createdAt)}
+            </span>
+          )}
+          {isArrived && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 800, letterSpacing: 0.5, color: '#FACC15' }}>
+              <span className="pulse" style={{ width: 7, height: 7, borderRadius: 10, background: '#FACC15', boxShadow: '0 0 8px #FACC15' }}/>
+              GUEST NOTIFIED
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Big number + plate */}
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="mono" style={{
+            display: 'inline-flex', alignItems: 'center',
+            fontSize: 15, fontWeight: 800, letterSpacing: 0.4,
+            color: 'var(--text)',
+            padding: '4px 8px', borderRadius: 6,
+            background: 'rgba(255,255,255,0.08)',
+            marginLeft: -8, marginBottom: 8,
+          }}>
+            KEY #{car.carQrId}
+          </div>
+          {car.carNumber ? (
+            <div className="mono" style={{
+              fontSize: 26, fontWeight: 800, letterSpacing: 0.5,
+              lineHeight: 1, color: 'var(--text)',
+            }}>{car.carNumber}</div>
+          ) : (
+            <div style={{
+              fontSize: 16, fontWeight: 700, color: 'var(--text-mute)', fontStyle: 'italic',
+            }}>no plate on file</div>
+          )}
+        </div>
+        <button onClick={onEdit} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '6px 10px', borderRadius: 9,
+          background: 'var(--surface-2)', border: '1px solid var(--line)',
+          color: 'var(--text-dim)', fontSize: 12, fontWeight: 600,
+        }}>
+          <Icon.edit/> Edit
+        </button>
+      </div>
+
+      {/* Note */}
+      {car.notes && (
+        <div style={{
+          marginTop: 10, padding: '8px 10px', borderRadius: 9,
+          background: 'rgba(255,255,255,0.025)', border: '1px solid var(--line)',
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+          fontSize: 12.5, color: 'var(--text-dim)',
+        }}>
+          <span style={{ color: 'var(--text-mute)', marginTop: 1 }}><Icon.note/></span>
+          {car.notes}
+        </div>
+      )}
+
+      {/* Notes surface under plate if present */}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+        {isPending && (
+          <>
+            <PrimaryBtn kind="ghost" onClick={onReject} style={{ flex: 1 }}>Reject</PrimaryBtn>
+            <PrimaryBtn onClick={onAccept} icon={<Icon.check/>} style={{ flex: 2 }}>Accept</PrimaryBtn>
+          </>
+        )}
+        {isAccepted && (
+          <>
+            <PrimaryBtn kind="ghost" onClick={onNotify} icon={<Icon.bell/>} style={{ flex: 1 }}>Notify user</PrimaryBtn>
+            <PrimaryBtn kind="success" onClick={onHandedOver} icon={<Icon.check/>} style={{ flex: 1 }}>Handed over</PrimaryBtn>
+          </>
+        )}
+        {isArrived && (
+          <PrimaryBtn kind="success" onClick={onHandedOver} icon={<Icon.check/>} style={{ flex: 1 }}>Mark handed over</PrimaryBtn>
+        )}
+      </div>
+
+      {/* Free key manual */}
+      <button onClick={onFreeKey} className="free-key-btn">
+        <Icon.hand/> Free key · collected manually
+      </button>
+    </Shell>
+  );
+}
+
+// ─── Rejected card: declined requests that still hold a key ─────
+function RejectedCard({ car, onFreeKey }) {
+  const mins = Math.max(1, Math.floor((Date.now() - (car.rejectedAt || car.createdAt)) / 60000));
+  return (
+    <div className="fade-in card-rejected" style={{ marginBottom: 12, padding: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{
+          fontSize: 11.5, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase',
+          color: '#EF4444',
+        }}>Rejected</div>
+        <div style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>{mins} min ago</div>
+      </div>
+
+      {/* Big number + Declined chip */}
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="mono" style={{
+            display: 'inline-flex', alignItems: 'center',
+            fontSize: 15, fontWeight: 800, letterSpacing: 0.4,
+            color: 'rgba(239,68,68,0.95)',
+            padding: '4px 8px', borderRadius: 6,
+            background: 'rgba(239,68,68,0.12)',
+            marginLeft: -8, marginBottom: 8,
+          }}>
+            KEY #{car.carQrId}
+          </div>
+          {car.carNumber ? (
+            <div className="mono" style={{
+              fontSize: 24, fontWeight: 800, letterSpacing: 0.5,
+              lineHeight: 1, color: 'var(--text)', opacity: 0.85,
+            }}>{car.carNumber}</div>
+          ) : (
+            <div style={{
+              fontSize: 16, fontWeight: 700, color: 'var(--text-mute)', fontStyle: 'italic',
+            }}>no plate on file</div>
+          )}
+        </div>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '7px 12px', borderRadius: 10,
+          background: 'rgba(239,68,68,0.10)',
+          border: '1px solid rgba(239,68,68,0.35)',
+          color: '#EF4444', fontSize: 12.5, fontWeight: 700,
+        }}>
+          <Icon.xCircle/> Declined
+        </div>
+      </div>
+
+      {/* Reason */}
+      {(car.rejectReason || car.notes) && (
+        <div style={{
+          marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 8,
+          fontSize: 12.5, color: 'var(--text-dim)',
+        }}>
+          <span style={{ color: 'rgba(239,68,68,0.7)', marginTop: 1 }}><Icon.note/></span>
+          {car.rejectReason || car.notes}
+        </div>
+      )}
+
+      {/* Single action: free key */}
+      <button onClick={onFreeKey} className="free-key-btn">
+        <Icon.hand/> Free key · collected manually
+      </button>
+    </div>
+  );
+}
+
+// ─── Incoming card: just-parked ──────────────────────────────
+function IncomingCard({ car, onSave, onEdit, onFreeKey }) {
+  const [num, setNum] = useState(car.carNumber || '');
+  const [note, setNote] = useState(car.notes || '');
+
+  if (car.needsDetails) {
+    return (
+      <div className="fade-in card-needs" style={{ marginBottom: 12, padding: 14 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <StatusChip status="InParking"/>
+            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10 }}>·</span>
+            <StatusChip status="NeedsDetails"/>
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>{relTime(car.createdAt)}</div>
+        </div>
+        <div className="mono" style={{
+          display: 'inline-block', fontSize: 26, fontWeight: 800, letterSpacing: 0.5,
+          color: 'var(--text)', marginTop: 10, marginBottom: 2,
+        }}>KEY #{car.carQrId}</div>
+        <div style={{ fontSize: 12.5, color: 'rgba(245,182,56,0.9)', fontWeight: 600, marginBottom: 4 }}>
+          Add car number below →
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 12, marginBottom: 8 }}>Car number</div>
+        <PlateInput value={num} onChange={setNum} accent="rgba(245,182,56,0.5)"/>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 10 }}>Notes <span style={{ textTransform: 'none', color: 'var(--text-mute)', fontWeight: 500 }}>· optional</span></div>
+        <input value={note} onChange={e=>setNote(e.target.value)}
+          placeholder="Add a note"
+          style={{
+            width: '100%', marginTop: 6, height: 38, padding: '0 12px',
+            background: 'var(--bg-2)', border: '1px solid var(--line)',
+            borderRadius: 10, color: 'var(--text)', fontSize: 13.5, outline: 'none',
+          }}/>
+        <PrimaryBtn
+          onClick={()=>num && onSave(num, note)}
+          icon={<Icon.check/>}
+          style={{
+            width: '100%', marginTop: 12,
+            background: num ? '#F5B638' : 'var(--surface-3)',
+            color: num ? '#1a1400' : 'var(--text-mute)',
+            boxShadow: num ? '0 4px 14px rgba(245,182,56,0.25), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+          }}>
+          Save details
+        </PrimaryBtn>
+        <button onClick={onFreeKey} className="free-key-btn">
+          <Icon.hand/> Free key · collected manually
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fade-in card-parking" style={{ marginBottom: 10, padding: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <StatusChip status="InParking"/>
+        <div style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>{relTime(car.createdAt)}</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="mono" style={{
+            display: 'inline-flex', alignItems: 'center',
+            fontSize: 14, fontWeight: 800, letterSpacing: 0.4,
+            color: 'var(--text)',
+            padding: '3px 7px', borderRadius: 6,
+            background: 'rgba(255,255,255,0.08)',
+            marginLeft: -7, marginBottom: 6,
+          }}>KEY #{car.carQrId}</div>
+          <div className="mono" style={{
+            fontSize: 24, fontWeight: 800, letterSpacing: 0.5, lineHeight: 1, color: 'var(--text)',
+          }}>{car.carNumber || '-'}</div>
+        </div>
+        <button onClick={onEdit} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '6px 10px', borderRadius: 8,
+          background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)',
+          color: 'var(--text-dim)', fontSize: 12, fontWeight: 600,
+        }}><Icon.edit/> Edit</button>
+      </div>
+      {car.notes && (
+        <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 8, display: 'flex', gap: 6, alignItems:'center' }}>
+          <Icon.note/> {car.notes}
+        </div>
+      )}
+      <button onClick={onFreeKey} className="free-key-btn">
+        <Icon.hand/> Free key · collected manually
+      </button>
+    </div>
+  );
+}
+
+function EmptyState({ tab }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '60px 20px', gap: 10,
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 16,
+        background: 'var(--surface)', border: '1px solid var(--line)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: 'var(--text-mute)',
+      }}>
+        {tab === 'outgoing' ? <Icon.arrowUp/> : <Icon.arrowDown/>}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>
+        {tab === 'outgoing' ? 'No cars requested' : 'Nothing incoming'}
+      </div>
+      <div style={{ fontSize: 12.5, color: 'var(--text-dim)', textAlign: 'center', maxWidth: 240 }}>
+        {tab === 'outgoing'
+          ? 'Guests haven\'t called any cars yet.'
+          : 'New parkings land here. Scan a QR to start one.'}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { QueueScreen });</script>
+<script type="text/babel" data-presets="react" data-source="scan.jsx">
+// scan.jsx - Scan QR or find-by-tag → immediate Action Card
+
+const ScanScreen = ({ cars, setCars, showToast, openCarEdit, setActiveNav }) => {
+  const [tagInput, setTagInput] = useState('');
+  const [flash, setFlash] = useState(false);
+  const [activeResult, setActiveResult] = useState(null); // { qr, car|null }
+
+  // Fake "found" match when typing 3+ chars
+  const matches = useMemo(() => {
+    if (!tagInput || tagInput.length < 2) return [];
+    const q = tagInput.replace(/[^0-9]/g, '');
+    if (!q) return [];
+    return cars.filter(c => String(c.carQrId).includes(q) && c.status !== 'Completed').slice(0, 3);
+  }, [tagInput, cars]);
+
+  // Simulate QR scan - pick first Pending or Accepted car
+  const simulateScan = () => {
+    const urgent = cars.find(c => c.status === 'Pending')
+      || cars.find(c => c.status === 'Arrived')
+      || cars.find(c => c.status === 'Accepted')
+      || cars.find(c => c.status === 'InParking');
+    if (urgent) {
+      setActiveResult({ qr: urgent.carQrId, car: urgent });
+    } else {
+      setActiveResult({ qr: 10299, car: null });
+    }
+  };
+
+  const openForTag = (qr) => {
+    const car = cars.find(c => c.carQrId === qr && c.status !== 'Completed');
+    setActiveResult({ qr, car: car || null });
+    setTagInput('');
+  };
+
+  // Mutations
+  const patchCar = (id, patch) => setCars(cs => cs.map(c => c.id === id ? { ...c, ...patch } : c));
+  const onAccept = (c) => { patchCar(c.id, { status: 'Accepted', acceptedAt: Date.now() }); showToast({ kind: 'success', msg: `#${c.carQrId} accepted` }); setActiveResult(null); };
+  const onReject = (c) => { patchCar(c.id, { status: 'Rejected', rejectedAt: Date.now() }); showToast({ kind: 'warn', msg: `#${c.carQrId} rejected` }); setActiveResult(null); };
+  const onNotify = (c) => { patchCar(c.id, { status: 'Arrived' }); showToast({ kind: 'success', msg: `Guest notified for #${c.carQrId}` }); setActiveResult(null); };
+  const onHandover = (c) => { patchCar(c.id, { status: 'Completed' }); showToast({ kind: 'success', msg: `#${c.carQrId} handed over` }); setActiveResult(null); };
+  const onFreeKey = (c) => { patchCar(c.id, { status: 'Completed' }); showToast({ kind: 'info', msg: `Key #${c.carQrId} freed` }); setActiveResult(null); };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', position: 'relative' }}>
+      {/* Header */}
+      <div style={{ padding: '14px 18px 8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>Saturday, 18 April</div>
+            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.02, marginTop: 2 }}>Scan a ticket</div>
+          </div>
+          <button onClick={()=>setFlash(f=>!f)} style={{
+            display:'flex', alignItems:'center', gap: 6,
+            padding: '8px 12px', borderRadius: 20,
+            background: flash ? 'var(--orange-tint)' : 'var(--surface-2)',
+            border: '1px solid ' + (flash ? 'rgba(254,140,0,0.35)':'var(--line)'),
+            color: flash ? 'var(--orange)' : 'var(--text-dim)',
+            fontSize: 12, fontWeight: 600,
+          }}><Icon.flash/> Flash</button>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 8, maxWidth: 280 }}>
+          Point camera at the QR - or enter the key tag below.
+        </div>
+      </div>
+
+      {/* Viewfinder */}
+      <div style={{ padding: '8px 18px' }}>
+        <button onClick={simulateScan} style={{
+          position: 'relative', width: '100%', aspectRatio: '1 / 1',
+          borderRadius: 22, overflow: 'hidden', display: 'block',
+          background: 'radial-gradient(circle at 50% 40%, #1b1b20 0%, #0a0a0b 90%)',
+          border: '1px solid var(--line)',
+        }}>
+          {[
+            { top: 18, left: 18, borderTop: '3px solid var(--orange)', borderLeft: '3px solid var(--orange)', borderRadius: '8px 0 0 0' },
+            { top: 18, right: 18, borderTop: '3px solid var(--orange)', borderRight: '3px solid var(--orange)', borderRadius: '0 8px 0 0' },
+            { bottom: 18, left: 18, borderBottom: '3px solid var(--orange)', borderLeft: '3px solid var(--orange)', borderRadius: '0 0 0 8px' },
+            { bottom: 18, right: 18, borderBottom: '3px solid var(--orange)', borderRight: '3px solid var(--orange)', borderRadius: '0 0 8px 0' },
+          ].map((s,i) => <div key={i} style={{ position:'absolute', width: 30, height: 30, ...s }}/> )}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 16,
+              border: '2px dashed rgba(254,140,0,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--orange)', background: 'rgba(254,140,0,0.06)',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <path d="M2 10V4a2 2 0 012-2h6M26 10V4a2 2 0 00-2-2h-6M2 18v6a2 2 0 002 2h6M26 18v6a2 2 0 01-2 2h-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 0.5, textTransform: 'uppercase', fontWeight: 600 }}>
+              Tap to simulate scan
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* Divider OR */}
+      <div style={{ padding: '18px 32px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }}/>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 1, fontWeight: 600 }}>OR</div>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }}/>
+      </div>
+
+      {/* Manual input */}
+      <div style={{ padding: '0 18px' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 6 }}>
+          Find by key tag
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '0 14px', height: 44,
+          background: 'var(--surface)', borderRadius: 12,
+          border: '1px solid ' + (tagInput ? 'var(--orange)' : 'var(--line)'),
+          transition: 'border-color 180ms',
+        }}>
+          <span className="mono" style={{ color: 'var(--text-mute)', fontSize: 14 }}>#</span>
+          <input value={tagInput} onChange={e=>setTagInput(e.target.value)} placeholder="10000"
+            className="mono"
+            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 15, fontWeight: 600 }}/>
+          {tagInput && <button onClick={()=>setTagInput('')} style={{ color: 'var(--text-mute)' }}><Icon.close/></button>}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--text-mute)', marginTop: 6, display:'flex', alignItems:'center', gap:5 }}>
+          <span>ⓘ</span> Enter the tag number printed on the physical key
+        </div>
+      </div>
+
+      {/* Matches → open action card */}
+      <div style={{ padding: '14px 18px 0', flex: 1, overflow: 'auto' }}>
+        {matches.length > 0 && (
+          <>
+            <div style={{ fontSize: 11, color: 'var(--orange)', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>
+              {matches.length} match{matches.length>1?'es':''}
+            </div>
+            {matches.map(c => (
+              <button key={c.id} onClick={()=>openForTag(c.carQrId)}
+                className="fade-in"
+                style={{
+                  width: '100%', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: 12, marginBottom: 8, borderRadius: 14,
+                  background: 'var(--surface)',
+                  border: '1px solid rgba(254,140,0,0.25)',
+                }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="num" style={{ fontSize: 17, fontWeight: 700, letterSpacing: -0.02 }}>#{c.carQrId}</div>
+                    <span className="mono" style={{ fontSize: 12, color: 'var(--text-dim)' }}>· {c.carNumber || '-'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <StatusChip status={c.status}/>
+                    <span style={{ fontSize: 11, color: 'var(--text-mute)' }}>{relTime(c.createdAt)}</span>
+                  </div>
+                </div>
+                <div style={{
+                  padding: '8px 12px', borderRadius: 10,
+                  background: 'var(--orange)', color: '#fff',
+                  fontSize: 12.5, fontWeight: 600, display:'flex', alignItems:'center', gap:5,
+                }}>Open <Icon.chevron/></div>
+              </button>
+            ))}
+          </>
+        )}
+        {tagInput && matches.length === 0 && (
+          <button onClick={()=>openForTag(parseInt(tagInput.replace(/[^0-9]/g, ''), 10))} style={{
+            width: '100%', padding: 14, borderRadius: 12, background: 'var(--surface)',
+            border: '1px dashed var(--line-2)', textAlign: 'center',
+            color: 'var(--text-dim)', fontSize: 13,
+          }}>
+            No match - tap to check tag <span className="mono" style={{color:'var(--text)'}}>#{tagInput}</span>
+          </button>
+        )}
+      </div>
+
+      {/* Action card sheet */}
+      {activeResult && (
+        <ScanActionCard
+          result={activeResult}
+          onClose={()=>setActiveResult(null)}
+          onAccept={onAccept}
+          onReject={onReject}
+          onNotify={onNotify}
+          onHandover={onHandover}
+          onFreeKey={onFreeKey}
+          onEdit={(c)=>{ setActiveResult(null); openCarEdit(c); }}
+        />
+      )}
+    </div>
+  );
+};
+
+// ─── Scan Action Card - mirrors queue cards ────────────
+function ScanActionCard({ result, onClose, onAccept, onReject, onNotify, onHandover, onFreeKey, onEdit }) {
+  const { qr, car } = result;
+  useTick(1000);
+
+  // Choose card class based on status
+  const cardClass = !car ? 'card-accepted'
+    : car.status === 'Pending' ? 'card-pending'
+    : car.status === 'Arrived' ? 'card-ready'
+    : car.status === 'InParking' ? 'card-parking'
+    : car.status === 'Rejected' ? 'card-rejected'
+    : 'card-accepted';
+
+  const keyChipBg = !car ? 'rgba(255,255,255,0.08)'
+    : car.status === 'Rejected' ? 'rgba(239,68,68,0.12)'
+    : car.status === 'InParking' ? 'rgba(74,222,128,0.14)'
+    : 'rgba(255,255,255,0.08)';
+  const keyChipColor = !car ? 'var(--text)'
+    : car.status === 'Rejected' ? 'rgba(239,68,68,0.95)'
+    : 'var(--text)';
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 100, overflow: 'hidden', borderRadius: 'inherit' }}>
+      <div className="bg-fade" onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+      }}/>
+      <div className="sheet-up" style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        background: 'var(--bg-2)', borderRadius: '22px 22px 0 0',
+        border: '1px solid var(--line)', borderBottom: 'none',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
+      }}>
+        {/* Grabber */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 2px' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.18)' }}/>
+        </div>
+
+        <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+              Scanned
+            </div>
+            <button onClick={onClose} style={{
+              width: 30, height: 30, borderRadius: 8,
+              background: 'var(--surface-2)', border: '1px solid var(--line)',
+              color: 'var(--text-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}><Icon.close/></button>
+          </div>
+
+          {/* The card - same shape as OutgoingCard */}
+          <div className={'fade-in ' + cardClass} style={{ padding: 14 }}>
+            {/* Header row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              {car ? <StatusChip status={car.status}/> : (
+                <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.7, textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+                  Free Key
+                </span>
+              )}
+              {car && (
+                <div style={{ textAlign: 'right' }}>
+                  {car.status === 'Pending' && (
+                    <div style={{ fontSize: 11.5, color: '#FF8A3D', fontWeight: 700 }}>
+                      {elapsedMin(car.calledAt || car.createdAt)}
+                    </div>
+                  )}
+                  {car.status === 'Accepted' && (
+                    <div style={{ fontSize: 11.5, color: 'var(--blue)', fontWeight: 600 }}>
+                      {elapsedMin(car.acceptedAt || car.createdAt)}
+                    </div>
+                  )}
+                  {car.status === 'Arrived' && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: '#FACC15', fontWeight: 700 }}>
+                      <span className="pulse" style={{ width: 7, height: 7, borderRadius: 10, background: '#FACC15', boxShadow: '0 0 8px #FACC15' }}/>
+                      GUEST NOTIFIED
+                    </div>
+                  )}
+                  {car.status === 'InParking' && (
+                    <div style={{ fontSize: 11.5, color: 'var(--green)', fontWeight: 600 }}>
+                      {relTime(car.createdAt)}
+                    </div>
+                  )}
+                  {car.status === 'Rejected' && (
+                    <div style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>
+                      {elapsedMin(car.rejectedAt || car.createdAt)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Big number + plate */}
+            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="mono" style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  fontSize: 15, fontWeight: 800, letterSpacing: 0.4,
+                  color: keyChipColor,
+                  padding: '4px 8px', borderRadius: 6,
+                  background: keyChipBg,
+                  marginLeft: -8, marginBottom: 8,
+                }}>
+                  KEY #{qr}
+                </div>
+                {car && car.carNumber ? (
+                  <div className="mono" style={{
+                    fontSize: 26, fontWeight: 800, letterSpacing: 0.5,
+                    lineHeight: 1, color: 'var(--text)',
+                    opacity: car.status === 'Rejected' ? 0.85 : 1,
+                  }}>{car.carNumber}</div>
+                ) : car ? (
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-mute)', fontStyle: 'italic' }}>
+                    no plate on file
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-mute)', fontStyle: 'italic' }}>
+                    unassigned tag
+                  </div>
+                )}
+              </div>
+              {car && (
+                <button onClick={()=>onEdit(car)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 10px', borderRadius: 9,
+                  background: 'var(--surface-2)', border: '1px solid var(--line)',
+                  color: 'var(--text-dim)', fontSize: 12, fontWeight: 600,
+                }}>
+                  <Icon.edit/> Edit
+                </button>
+              )}
+            </div>
+
+            {/* Note / reason */}
+            {car && (car.notes || car.rejectReason) && (
+              <div style={{
+                marginTop: 10, padding: '8px 10px', borderRadius: 9,
+                background: 'rgba(255,255,255,0.025)', border: '1px solid var(--line)',
+                display: 'flex', alignItems: 'flex-start', gap: 8,
+                fontSize: 12.5, color: 'var(--text-dim)',
+              }}>
+                <span style={{ color: 'var(--text-mute)', marginTop: 1 }}><Icon.note/></span>
+                {car.rejectReason || car.notes}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              {!car && (
+                <PrimaryBtn kind="solid" onClick={onClose} icon={<Icon.check/>} style={{ flex: 1 }}>Done</PrimaryBtn>
+              )}
+              {car && car.status === 'Pending' && (
+                <>
+                  <PrimaryBtn kind="ghost" onClick={()=>onReject(car)} style={{ flex: 1 }}>Reject</PrimaryBtn>
+                  <PrimaryBtn onClick={()=>onAccept(car)} icon={<Icon.check/>} style={{ flex: 2 }}>Accept</PrimaryBtn>
+                </>
+              )}
+              {car && car.status === 'Accepted' && (
+                <>
+                  <PrimaryBtn kind="ghost" onClick={()=>onNotify(car)} icon={<Icon.bell/>} style={{ flex: 1 }}>Notify user</PrimaryBtn>
+                  <PrimaryBtn kind="success" onClick={()=>onHandover(car)} icon={<Icon.check/>} style={{ flex: 1 }}>Handed over</PrimaryBtn>
+                </>
+              )}
+              {car && car.status === 'Arrived' && (
+                <PrimaryBtn kind="success" onClick={()=>onHandover(car)} icon={<Icon.check/>} style={{ flex: 1 }}>Mark handed over</PrimaryBtn>
+              )}
+              {car && car.status === 'InParking' && (
+                <>
+                  {!car.carNumber && (
+                    <PrimaryBtn kind="solid" onClick={()=>onEdit(car)} icon={<Icon.edit/>} style={{ flex: 1 }}>Add plate</PrimaryBtn>
+                  )}
+                  <PrimaryBtn kind="ghost" onClick={onClose} icon={<Icon.check/>} style={{ flex: 1 }}>Close</PrimaryBtn>
+                </>
+              )}
+              {car && car.status === 'Rejected' && (
+                <div style={{ flex: 1, fontSize: 12, color: 'var(--text-dim)', padding: '8px 0' }}>
+                  Call was declined - guest may collect manually.
+                </div>
+              )}
+            </div>
+
+            {/* Free key - on every active card except parking (match queue) */}
+            {car && ['Pending','Accepted','Arrived','Rejected'].includes(car.status) && (
+              <button onClick={()=>onFreeKey(car)} className="free-key-btn">
+                <Icon.hand/> Free key · collected manually
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ScanScreen });
+</script>
+<script type="text/babel" data-presets="react" data-source="keys.jsx">
+// keys.jsx - Valet Key Wall: physical-pegboard grid of all QR tags
+
+const KeysScreen = ({ cars, setCars, showToast, openCarEdit }) => {
+  const [filter, setFilter] = useState('all'); // all | inuse | available
+  const [pickedSlot, setPickedSlot] = useState(null); // QR id of tapped empty slot
+  const [search, setSearch] = useState('');
+
+  // Build full wall: every tag id 10200..10280 (seeded data range), each annotated with status
+  const WALL_START = 10200;
+  const WALL_END = 10280;
+  const carByQr = {};
+  cars.forEach(c => {
+    if (['Pending','Accepted','Arrived','InParking','Rejected'].includes(c.status)) {
+      carByQr[c.carQrId] = c;
+    }
+  });
+
+  const slots = [];
+  for (let q = WALL_START; q <= WALL_END; q++) {
+    const car = carByQr[q];
+    slots.push({ qr: q, car, status: car ? car.status : 'Free' });
+  }
+
+  const counts = {
+    all: slots.length,
+    free: slots.filter(s => s.status === 'Free').length,
+    pending: slots.filter(s => s.status === 'Pending').length,
+    accepted: slots.filter(s => s.status === 'Accepted').length,
+    arrived: slots.filter(s => s.status === 'Arrived').length,
+    parking: slots.filter(s => s.status === 'InParking').length,
+    rejected: slots.filter(s => s.status === 'Rejected').length,
+  };
+  const inUse = counts.pending + counts.accepted + counts.arrived + counts.parking + counts.rejected;
+
+  // Filter for display
+  const filteredSlots = slots.filter(s => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (String(s.qr).includes(q)) return true;
+      if (s.car?.carNumber?.toLowerCase().includes(q)) return true;
+      return false;
+    }
+    if (filter === 'all') return true;
+    if (filter === 'inuse') return s.status !== 'Free';
+    if (filter === 'free') return s.status === 'Free';
+    return s.status === filter;
+  });
+
+  const freeKey = (c) => {
+    setCars(cs => cs.map(x => x.id === c.id ? { ...x, status: 'Completed' } : x));
+    showToast && showToast({ kind: 'info', msg: `Key #${c.carQrId} freed` });
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
+      <div style={{ padding: '14px 18px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.02 }}>Key Wall</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-dim)', marginTop: 2 }}>
+              {inUse} in use · {counts.free} free · {slots.length} total
+            </div>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 11px', borderRadius: 16,
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            fontSize: 11.5, color: 'var(--text-dim)', fontWeight: 600,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: 10, background: 'var(--green)', boxShadow: '0 0 6px var(--green)' }}/>
+            Live
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '0 14px', height: 40, marginTop: 12,
+          background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--line)',
+        }}>
+          <span style={{ color: 'var(--text-mute)' }}><Icon.search/></span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by tag # or plate"
+            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 14 }}/>
+          {search && <button onClick={()=>setSearch('')} style={{ color: 'var(--text-mute)' }}><Icon.close/></button>}
+        </div>
+      </div>
+
+      {/* Filter pills */}
+      <div style={{ padding: '8px 14px 4px', display: 'flex', gap: 6, overflowX: 'auto' }} className="phone-scroll no-scrollbar">
+        {[
+          { v:'all', l:'All', c: counts.all, dot: null },
+          { v:'inuse', l:'In use', c: inUse, dot: 'var(--orange)' },
+          { v:'Pending', l:'Calling', c: counts.pending, dot: 'var(--orange)' },
+          { v:'Accepted', l:'Accepted', c: counts.accepted, dot: 'var(--blue)' },
+          { v:'Arrived', l:'Ready', c: counts.arrived, dot: '#FACC15' },
+          { v:'InParking', l:'Parked', c: counts.parking, dot: 'var(--green)' },
+          { v:'Rejected', l:'Rejected', c: counts.rejected, dot: '#EF4444' },
+          { v:'free', l:'Free', c: counts.free, dot: 'var(--text-mute)' },
+        ].map(o => {
+          const active = filter === o.v;
+          return (
+            <button key={o.v} onClick={()=>{ setFilter(o.v); setSearch(''); }} style={{
+              padding: '6px 11px', borderRadius: 18, whiteSpace: 'nowrap',
+              background: active ? '#2A2A30' : 'transparent',
+              color: active ? '#fff' : 'var(--text-dim)',
+              border: '1px solid ' + (active ? 'rgba(255,255,255,0.1)' : 'var(--line)'),
+              fontSize: 12, fontWeight: 600,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}>
+              {o.dot && <span style={{ width:6, height:6, borderRadius:8, background: o.dot, boxShadow: active ? `0 0 6px ${o.dot}` : 'none' }}/>}
+              {o.l}
+              <span style={{ opacity: 0.7, fontWeight: 700 }}>{o.c}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div style={{ padding: '6px 18px 4px', display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 10.5, color: 'var(--text-mute)' }}>
+        <LegendChip color="var(--orange)" label="Calling"/>
+        <LegendChip color="var(--blue)" label="Accepted"/>
+        <LegendChip color="#FACC15" label="Ready"/>
+        <LegendChip color="var(--green)" label="Parked"/>
+        <LegendChip color="#EF4444" label="Rejected"/>
+      </div>
+
+      {/* The wall */}
+      <div className="phone-scroll" style={{ flex: 1, overflow: 'auto', padding: '10px 14px 120px' }}>
+        {filteredSlots.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-mute)', fontSize: 13 }}>
+            No tags match.
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: 6,
+          }}>
+            {filteredSlots.map(s => (
+              <KeySlot
+                key={s.qr}
+                slot={s}
+                onTap={() => {
+                  if (s.car) openCarEdit(s.car);
+                  else setPickedSlot(pickedSlot === s.qr ? null : s.qr);
+                }}
+                picked={pickedSlot === s.qr}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Summary band - subtle totals */}
+        <div style={{
+          marginTop: 20, padding: '14px',
+          background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--line)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>Tonight's board</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.4, textTransform: 'uppercase' }}>
+              Capacity {Math.round(inUse/slots.length*100)}%
+            </div>
+          </div>
+          <div style={{
+            height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', display: 'flex',
+          }}>
+            <div style={{ flex: counts.pending + counts.arrived, background: 'var(--orange)' }}/>
+            <div style={{ flex: counts.accepted, background: 'var(--blue)' }}/>
+            <div style={{ flex: counts.parking, background: 'var(--green)' }}/>
+            <div style={{ flex: counts.rejected, background: '#EF4444' }}/>
+            <div style={{ flex: counts.free, background: 'transparent' }}/>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 11, color: 'var(--text-mute)' }}>
+            <span>{counts.pending + counts.arrived} calling</span>
+            <span>{counts.accepted} en-route</span>
+            <span>{counts.parking} parked</span>
+            <span>{counts.rejected} rejected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Individual key slot (pegboard cell) ──────────────────────
+function KeySlot({ slot, onTap, picked }) {
+  const { qr, car, status } = slot;
+  const isFree = status === 'Free';
+
+  const palette = {
+    Pending:   { bg: 'rgba(254,140,0,0.14)',   border: 'rgba(254,140,0,0.55)',   text: 'var(--orange)', dot: 'var(--orange)' },
+    Accepted:  { bg: 'rgba(59,130,246,0.14)',  border: 'rgba(59,130,246,0.55)',  text: 'var(--blue)',   dot: 'var(--blue)' },
+    Arrived:   { bg: 'rgba(250,204,21,0.14)',  border: 'rgba(250,204,21,0.55)',  text: '#FACC15',       dot: '#FACC15' },
+    InParking: { bg: 'rgba(46,195,107,0.14)',  border: 'rgba(46,195,107,0.55)',  text: 'var(--green)',  dot: 'var(--green)' },
+    Rejected:  { bg: 'rgba(239,68,68,0.14)',   border: 'rgba(239,68,68,0.55)',   text: '#EF4444',       dot: '#EF4444' },
+    Free:      { bg: 'transparent',            border: 'rgba(255,255,255,0.08)', text: 'var(--text-mute)', dot: null },
+  };
+  const p = palette[status];
+
+  // Short QR (last 3 digits) for readability
+  const short = String(qr).slice(-3);
+
+  return (
+    <button onClick={onTap} className="fade-in" style={{
+      position: 'relative',
+      aspectRatio: '1',
+      padding: 6, borderRadius: 10,
+      background: picked ? 'rgba(255,255,255,0.08)' : p.bg,
+      border: '1.5px ' + (isFree ? 'dashed' : 'solid') + ' ' + (picked ? '#fff' : p.border),
+      color: p.text,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+      transition: 'all 140ms',
+      minHeight: 58,
+    }}>
+      {p.dot && (
+        <span className={status === 'Pending' || status === 'Arrived' ? 'pulse' : ''} style={{
+          position: 'absolute', top: 5, right: 5,
+          width: 6, height: 6, borderRadius: 8, background: p.dot,
+          boxShadow: `0 0 4px ${p.dot}`,
+        }}/>
+      )}
+      <div className="mono" style={{
+        fontSize: 15, fontWeight: 800, letterSpacing: 0.4, lineHeight: 1,
+        color: isFree ? 'var(--text-mute)' : 'var(--text)',
+      }}>
+        {short}
+      </div>
+      {car && car.carNumber ? (
+        <div className="mono" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.2, color: p.text, opacity: 0.9, lineHeight: 1 }}>
+          {car.carNumber.split('-').slice(-1)[0]}
+        </div>
+      ) : isFree ? (
+        <div style={{ fontSize: 8.5, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.3, textTransform: 'uppercase', lineHeight: 1 }}>
+          Free
+        </div>
+      ) : (
+        <div style={{ fontSize: 8.5, color: p.text, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', lineHeight: 1, opacity: 0.85 }}>
+          No plate
+        </div>
+      )}
+    </button>
+  );
+}
+
+function LegendChip({ color, label }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ width: 7, height: 7, borderRadius: 8, background: color, boxShadow: `0 0 4px ${color}` }}/>
+      {label}
+    </span>
+  );
+}
+
+function StatTile({ label, value, accent, dim }) {
+  return (
+    <div style={{
+      padding: '10px 12px', borderRadius: 12,
+      background: 'var(--surface)', border: '1px solid var(--line)',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {accent && <span style={{ width:6, height:6, borderRadius:8, background: accent, boxShadow:`0 0 6px ${accent}` }}/>}
+        <div style={{ fontSize: 10.5, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</div>
+      </div>
+      <div className="num" style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.03, marginTop: 4, color: dim ? 'var(--text-dim)' : 'var(--text)' }}>{value}</div>
+    </div>
+  );
+}
+
+function KeyRow({ car, onOpen, onFree }) {
+  const isRejected = car.status === 'Rejected';
+  return (
+    <div className="fade-in" style={{
+      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+      padding: '12px 14px', marginBottom: 8, borderRadius: 12,
+      background: isRejected ? 'rgba(239,68,68,0.06)' : 'var(--surface)',
+      border: '1px solid ' + (isRejected ? 'rgba(239,68,68,0.25)' : 'var(--line)'),
+    }}>
+      <button onClick={onOpen} style={{
+        flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', padding: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6, marginLeft: -7 }}>
+          <div className="mono" style={{
+            fontSize: 14, fontWeight: 800, letterSpacing: 0.4,
+            color: isRejected ? 'rgba(239,68,68,0.9)' : 'var(--text)',
+            padding: '3px 7px', borderRadius: 6,
+            background: isRejected ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.07)',
+          }}>KEY #{car.carQrId}</div>
+          <StatusChip status={car.status}/>
+        </div>
+        <div className="mono" style={{ fontSize: 20, fontWeight: 800, letterSpacing: 0.5, color: 'var(--text)', lineHeight: 1 }}>
+          {car.carNumber || '-'}
+        </div>
+        <div style={{ marginTop: 5, fontSize: 11.5, color: 'var(--text-mute)' }}>
+          {relTime(car.createdAt)}
+        </div>
+      </button>
+      {isRejected ? (
+        <button onClick={(e)=>{ e.stopPropagation(); onFree && onFree(); }} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '7px 11px', borderRadius: 9,
+          background: 'rgba(239,68,68,0.12)',
+          border: '1px solid rgba(239,68,68,0.35)',
+          color: '#EF4444', fontSize: 12, fontWeight: 700,
+        }}>
+          <Icon.hand/> Free key
+        </button>
+      ) : (
+        <span style={{ color: 'var(--text-mute)' }}><Icon.chevron/></span>
+      )}
+    </div>
+  );
+}
+
+// ─── Edit sheet ─────────────────────────────────────────────
+function EditCarSheet({ car, onClose, onSave, showToast }) {
+  const [num, setNum] = useState(car?.carNumber || '');
+  const [note, setNote] = useState(car?.notes || '');
+  useEffect(() => { if (car) { setNum(car.carNumber || ''); setNote(car.notes || ''); } }, [car?.id]);
+  if (!car) return null;
+
+  const elapsed = Math.floor((Date.now() - car.createdAt) / 60000);
+
+  // Status-aware visuals so the header card color matches the status
+  const statusPalette = {
+    Pending:   { grad: 'linear-gradient(160deg, rgba(255,138,61,0.18), rgba(255,138,61,0.02))', border: 'rgba(255,138,61,0.35)', sub: 'calling car' },
+    Accepted:  { grad: 'linear-gradient(160deg, rgba(90,168,255,0.16), rgba(90,168,255,0.02))', border: 'rgba(90,168,255,0.32)', sub: 'en route' },
+    Arrived:   { grad: 'linear-gradient(160deg, rgba(250,204,21,0.16), rgba(250,204,21,0.02))', border: 'rgba(250,204,21,0.38)', sub: 'ready at porch' },
+    InParking: { grad: 'linear-gradient(160deg, rgba(74,222,128,0.14), rgba(74,222,128,0.02))', border: 'rgba(74,222,128,0.28)', sub: 'in parking' },
+    Rejected:  { grad: 'linear-gradient(160deg, rgba(239,68,68,0.14),  rgba(239,68,68,0.02))',  border: 'rgba(239,68,68,0.30)',  sub: 'rejected' },
+    Completed: { grad: 'linear-gradient(160deg, rgba(255,255,255,0.04), transparent)',           border: 'var(--line)',            sub: 'completed' },
+  };
+  const sp = statusPalette[car.status] || statusPalette.InParking;
+
+  return (
+    <Sheet open={!!car} onClose={onClose} maxHeight="88%">
+      <div style={{ padding: '10px 18px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button onClick={onClose} style={{
+          width: 32, height: 32, borderRadius: 10, background: 'var(--surface-2)',
+          border: '1px solid var(--line)', display:'flex', alignItems:'center', justifyContent:'center',
+          color: 'var(--text-dim)',
+        }}><Icon.back/></button>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Edit Parking Details</div>
+        <div style={{ width: 32 }}/>
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--text-mute)', marginTop: 2 }}>Request #{car.carQrId}</div>
+
+      <div style={{ padding: '18px 18px 22px', overflow: 'auto' }}>
+        <div style={{
+          padding: 14, borderRadius: 14,
+          background: sp.grad,
+          border: '1px solid ' + sp.border,
+        }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <StatusChip status={car.status}/>
+            <div style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>{elapsed}m · {sp.sub}</div>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight:600, letterSpacing: 0.5, textTransform:'uppercase', marginTop: 10 }}>Car QR</div>
+          <div className="num" style={{ fontSize: 30, fontWeight: 700, letterSpacing: -0.03, marginTop: 2 }}>#{car.carQrId}</div>
+        </div>
+
+        <div style={{ marginTop: 18, fontSize: 13.5, fontWeight: 700 }}>Edit Details</div>
+        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>Only car number and notes can be updated</div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>Car number</div>
+          <div style={{ fontSize: 11, color: 'var(--orange)' }}>Required</div>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <PlateInput value={num} onChange={setNum} accent="rgba(254,140,0,0.5)"/>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }}>Notes</div>
+          <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>Optional</div>
+        </div>
+        <textarea value={note} onChange={e=>setNote(e.target.value)} maxLength={160}
+          rows={3}
+          style={{
+            width: '100%', marginTop: 6, padding: '10px 14px',
+            background: 'var(--bg-2)', border: '1px solid var(--line)',
+            borderRadius: 12, color: 'var(--text)', fontSize: 13.5, outline: 'none', resize: 'none',
+            fontFamily: 'inherit',
+          }}/>
+        <div style={{ fontSize: 11, color: 'var(--text-mute)', textAlign: 'right', marginTop: 2 }}>{note.length} / 160</div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          <PrimaryBtn kind="ghost" onClick={onClose} style={{ flex: 1 }}>Cancel</PrimaryBtn>
+          <PrimaryBtn
+            onClick={()=>{ onSave(car.id, num, note); onClose(); }}
+            icon={<Icon.check/>} style={{ flex: 1.5 }}>Save changes</PrimaryBtn>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+// ─── Profile ────────────────────────────────────────────────
+const ProfileScreen = () => {
+  return (
+    <div style={{ padding: '14px 18px 120px', background: 'var(--bg)', height: '100%', overflow: 'auto' }} className="phone-scroll">
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.02 }}>Profile</div>
+
+      <div style={{
+        marginTop: 16, padding: 16, borderRadius: 16,
+        background: 'var(--surface)', border: '1px solid var(--line)',
+        display: 'flex', gap: 12, alignItems: 'center',
+      }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: 16,
+          background: 'var(--orange)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, fontWeight: 700, color: '#fff',
+        }}>AR</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Arun R.</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>Valet · Kompound Club</div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+            <span style={{
+              fontSize: 10.5, color: 'var(--green)', background: 'var(--green-tint)',
+              padding: '2px 7px', borderRadius: 6, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase',
+            }}>● On shift</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tonight's stats */}
+      <div style={{ marginTop: 18, fontSize: 11, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tonight</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 8 }}>
+        <StatTile label="Handled" value={47} accent="var(--orange)"/>
+        <StatTile label="Avg wait" value="2:14" accent="var(--blue)"/>
+        <StatTile label="In parking" value={12} accent="var(--green)"/>
+      </div>
+
+      {/* Settings rows */}
+      <div style={{ marginTop: 18, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--line)', overflow:'hidden' }}>
+        {[
+          { label: 'Notifications', detail: 'On' },
+          { label: 'Sound alerts', detail: 'On' },
+        ].map((r, i, a) => (
+          <div key={r.label} style={{
+            padding: '14px 14px', display: 'flex', alignItems: 'center',
+            borderBottom: i < a.length-1 ? '1px solid var(--line)' : 'none',
+          }}>
+            <div style={{ flex: 1, fontSize: 14 }}>{r.label}</div>
+            {r.detail && <span style={{ fontSize: 12.5, color: 'var(--text-dim)', marginRight: 8 }}>{r.detail}</span>}
+            <span style={{ color: 'var(--text-mute)' }}><Icon.chevron/></span>
+          </div>
+        ))}
+      </div>
+
+      <button style={{
+        marginTop: 18, width: '100%', padding: '14px 0', borderRadius: 14,
+        background: 'var(--surface)', border: '1px solid var(--line)',
+        color: 'var(--text-dim)', fontSize: 14, fontWeight: 600,
+      }}>Sign out</button>
+
+      <button style={{
+        marginTop: 10, width: '100%', padding: '14px 0', borderRadius: 14,
+        background: 'transparent', border: '1px solid rgba(239,68,68,0.35)',
+        color: '#EF4444', fontSize: 14, fontWeight: 700,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2.5 3.5h9M5 3.5V2.5a1 1 0 011-1h2a1 1 0 011 1v1M3.5 3.5l.6 8a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8M5.8 6v4M8.2 6v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Delete account
+      </button>
+      <div style={{ marginTop: 8, textAlign: 'center', fontSize: 11, color: 'var(--text-mute)', lineHeight: 1.5 }}>
+        Permanently removes your account and all associated data. This action cannot be undone.
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { KeysScreen, EditCarSheet, ProfileScreen });
+</script>
+<script type="text/babel" data-presets="react" data-source="app.jsx">
+// app.jsx - shell with bottom nav + tweaks
+
+var { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "orange",
+  "cardStyle": "glow",
+  "plateStyle": "mono",
+  "compactCards": false
+}/*EDITMODE-END*/;
+
+function BashValetApp() {
+  const [cars, setCars] = useState(INITIAL_CARS);
+  const [nav, setNav] = useState(() => localStorage.getItem('bv_nav') || 'queue');
+  const [editCar, setEditCar] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [tweakOpen, setTweakOpen] = useState(false);
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+
+  useEffect(() => { localStorage.setItem('bv_nav', nav); }, [nav]);
+
+  // tweaks protocol
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweakOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweakOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  // Apply accent
+  useEffect(() => {
+    const root = document.documentElement;
+    const presets = {
+      orange: ['#FE8C00','#F83600'],
+      violet: ['#A78BFA','#7C3AED'],
+      cyan:   ['#22D3EE','#0891B2'],
+      pink:   ['#F472B6','#DB2777'],
+    };
+    const [a, b] = presets[tweaks.accent] || presets.orange;
+    root.style.setProperty('--orange', a);
+    root.style.setProperty('--orange-2', b);
+    root.style.setProperty('--orange-grad', `linear-gradient(135deg, ${a} 0%, ${b} 100%)`);
+    root.style.setProperty('--orange-tint', `color-mix(in srgb, ${a} 14%, transparent)`);
+  }, [tweaks.accent]);
+
+  const showToast = (t) => {
+    setToast(t);
+    setTimeout(() => setToast(null), 2400);
+  };
+
+  const setTweak = (k, v) => {
+    const next = { ...tweaks, [k]: v };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  const screen = (() => {
+    switch (nav) {
+      case 'queue':   return <QueueScreen cars={cars} setCars={setCars} showToast={showToast} openCarEdit={setEditCar} setActiveNav={setNav}/>;
+      case 'scan':    return <ScanScreen cars={cars} setCars={setCars} showToast={showToast} openCarEdit={setEditCar} setActiveNav={setNav}/>;
+      case 'keys':    return <KeysScreen cars={cars} setCars={setCars} showToast={showToast} openCarEdit={setEditCar}/>;
+      case 'profile': return <ProfileScreen/>;
+      default:        return null;
+    }
+  })();
+
+  const onSaveEdit = (id, carNumber, notes) => {
+    setCars(cs => cs.map(c => c.id === id ? { ...c, carNumber, notes, needsDetails: false } : c));
+    showToast({ kind:'success', msg: 'Details updated' });
+  };
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'var(--bg)', overflow: 'hidden',
+    }}>
+      {/* Screen content - fills the iframe edge-to-edge; outer phone chrome
+         (border, notch, home indicator) is provided by the parent .mini-phone */}
+      <div className="slide-in" key={nav} style={{ position: 'absolute', inset: 0 }}>
+        {screen}
+      </div>
+
+      <EditCarSheet car={editCar} onClose={()=>setEditCar(null)} onSave={onSaveEdit} showToast={showToast}/>
+
+      {/* Bottom nav */}
+      <BottomNav nav={nav} setNav={setNav}/>
+
+      <Toast toast={toast}/>
+
+      {/* Tweaks panel */}
+      {tweakOpen && (
+        <TweaksPanel tweaks={tweaks} setTweak={setTweak} onClose={()=>setTweakOpen(false)}/>
+      )}
+    </div>
+  );
+}
+
+function BottomNav({ nav, setNav }) {
+  const items = [
+    { k:'queue',   l:'Queue',   i:<Icon.queue/> },
+    { k:'scan',    l:'Scan',    i:<Icon.scan/> },
+    { k:'keys',    l:'Keys',    i:<Icon.keyNav/> },
+    { k:'profile', l:'Profile', i:<Icon.profile/> },
+  ];
+  return (
+    <div style={{
+      position: 'absolute', bottom: 16, left: 16, right: 16,
+      height: 60, borderRadius: 30,
+      background: 'rgba(20,20,24,0.85)', backdropFilter: 'blur(20px)',
+      border: '1px solid var(--line-2)',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+      padding: '0 8px', zIndex: 80,
+    }}>
+      {items.map(it => {
+        const active = nav === it.k;
+        return (
+          <button key={it.k} onClick={()=>setNav(it.k)} style={{
+            flex: 1, height: 44, borderRadius: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            background: active ? '#fff' : 'transparent',
+            color: active ? '#000' : 'var(--text-dim)',
+            fontSize: 12, fontWeight: 600, transition: 'all 180ms',
+            maxWidth: active ? 'none' : 60,
+          }}>
+            {it.i}
+            {active && <span>{it.l}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TweaksPanel({ tweaks, setTweak, onClose }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 20, right: 20, width: 280, zIndex: 9999,
+      background: 'rgba(20,20,24,0.95)', backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255,255,255,0.14)',
+      borderRadius: 16, padding: 16,
+      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+      color: '#F5F5F6', fontFamily: 'Inter, sans-serif',
+    }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>Tweaks</div>
+        <button onClick={onClose} style={{ color: '#9A9AA3' }}><Icon.close/></button>
+      </div>
+
+      <TRow label="Accent color">
+        <div style={{ display:'flex', gap: 6 }}>
+          {[
+            ['orange', '#FE8C00'], ['violet','#A78BFA'], ['cyan','#22D3EE'], ['pink','#F472B6']
+          ].map(([k,c]) => (
+            <button key={k} onClick={()=>setTweak('accent', k)} style={{
+              width: 28, height: 28, borderRadius: 10, background: c,
+              border: tweaks.accent===k ? '2px solid #fff' : '2px solid transparent',
+            }}/>
+          ))}
+        </div>
+      </TRow>
+
+      <TRow label="Active card style">
+        <Seg opts={[['glow','Glow'],['flat','Flat'],['solid','Solid']]} val={tweaks.cardStyle} onChange={v=>setTweak('cardStyle',v)}/>
+      </TRow>
+
+      <TRow label="Plate style">
+        <Seg opts={[['mono','Mono'],['display','Display']]} val={tweaks.plateStyle} onChange={v=>setTweak('plateStyle',v)}/>
+      </TRow>
+
+      <TRow label="Compact cards">
+        <Toggle val={tweaks.compactCards} onChange={v=>setTweak('compactCards',v)}/>
+      </TRow>
+    </div>
+  );
+}
+
+const TRow = ({ label, children }) => (
+  <div style={{ marginBottom: 12 }}>
+    <div style={{ fontSize: 10.5, color: '#9A9AA3', fontWeight: 600, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+    {children}
+  </div>
+);
+
+const Seg = ({ opts, val, onChange }) => (
+  <div style={{ display:'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 3, gap: 2 }}>
+    {opts.map(([k,l]) => (
+      <button key={k} onClick={()=>onChange(k)} style={{
+        flex: 1, height: 26, borderRadius: 6,
+        background: val===k ? '#fff' : 'transparent',
+        color: val===k ? '#000' : '#9A9AA3',
+        fontSize: 11, fontWeight: 600,
+      }}>{l}</button>
+    ))}
+  </div>
+);
+
+const Toggle = ({ val, onChange }) => (
+  <button onClick={()=>onChange(!val)} style={{
+    width: 40, height: 24, borderRadius: 14,
+    background: val ? '#FE8C00' : 'rgba(255,255,255,0.12)', position: 'relative',
+  }}>
+    <span style={{
+      position:'absolute', top: 2, left: val ? 18 : 2,
+      width: 20, height: 20, borderRadius: 12, background: '#fff',
+      transition: 'left 180ms',
+    }}/>
+  </button>
+);
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<BashValetApp/>);
+
+Object.assign(window, { BashValetApp });
+</script>
+</body></html>

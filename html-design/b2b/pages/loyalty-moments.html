@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Hospitality moments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+</head>
+<body>
+<div class="device">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">Hospitality</div>
+    <h1>Rules that <span class="accent">delight</span> regulars.</h1>
+    <p class="deck">Automatic prompts to your staff when a regular walks in or sits down.</p>
+  </section>
+
+  <nav class="subtab-nav">
+    <a class="active" href="loyalty-moments.html">Moments</a>
+    <a href="loyalty-profile.html">Look up a guest</a>
+  </nav>
+
+  <!-- LEAD -->
+  <p class="lead reveal">
+    <strong>You comped 14 items to regulars this week</strong> — <em>8 already booked a return.</em><br/>
+    Highest-earning rule: <strong>"5th-visit free dessert"</strong> — 62% return within 2 weeks.<br/>
+    <strong>3 rules are off.</strong> Turning on Anniversary alerts could recover 12 couples this month.
+  </p>
+
+  <!-- ACTIVE RULES -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Your rules</div>
+      <div class="head-right">
+        <button class="btn" data-prompt="Add a new hospitality moment rule — walk me through it." style="padding: 6px 12px; font-size: 11px;">+ New rule</button>
+      </div>
+    </div>
+
+    <div class="rule-row">
+      <input type="checkbox" checked />
+      <div>
+        <div class="rule-name">Welcome any top-50 regular by name</div>
+        <div class="rule-desc">Fires when a top-50 guest scans the QR or walks in.</div>
+        <span class="rule-chip">Door + table</span>
+      </div>
+      <button class="rule-edit" data-prompt="Edit the rule: Welcome any top-50 regular by name.">Edit</button>
+    </div>
+
+    <div class="rule-row">
+      <input type="checkbox" checked />
+      <div>
+        <div class="rule-name">5th-visit free dessert</div>
+        <div class="rule-desc">Suggest comping a dessert when a 5-time visitor sits down.</div>
+        <span class="rule-chip">Table only</span>
+      </div>
+      <button class="rule-edit" data-prompt="Edit the rule: 5th-visit free dessert.">Edit</button>
+    </div>
+
+    <div class="rule-row">
+      <input type="checkbox" checked />
+      <div>
+        <div class="rule-name">10th-visit free drink</div>
+        <div class="rule-desc">Suggest comping a drink when a 10-time visitor sits down.</div>
+        <span class="rule-chip">Table only</span>
+      </div>
+      <button class="rule-edit" data-prompt="Edit the rule: 10th-visit free drink.">Edit</button>
+    </div>
+
+    <div class="rule-row">
+      <input type="checkbox" checked />
+      <div>
+        <div class="rule-name">Birthday alert</div>
+        <div class="rule-desc">Notify staff if guest's birthday is within 3 days of their visit.</div>
+        <span class="rule-chip">Door + table</span>
+      </div>
+      <button class="rule-edit" data-prompt="Edit the rule: Birthday alert.">Edit</button>
+    </div>
+
+    <div class="rule-row">
+      <input type="checkbox" checked />
+      <div>
+        <div class="rule-name">High-spender VIP welcome</div>
+        <div class="rule-desc">Lifetime spend over ₹50,000 — alert the manager.</div>
+        <span class="rule-chip">Door + table</span>
+      </div>
+      <button class="rule-edit" data-prompt="Edit the rule: High-spender VIP welcome.">Edit</button>
+    </div>
+
+    <div class="rule-row off">
+      <input type="checkbox" />
+      <div>
+        <div class="rule-name">Anniversary alert<span class="off-tag">· Off</span></div>
+        <div class="rule-desc">12 couples have anniversaries in May — turn this on to greet them.</div>
+        <span class="rule-chip">Door + table</span>
+      </div>
+      <button class="rule-edit" data-prompt="Turn on the Anniversary alert rule.">Turn on</button>
+    </div>
+
+    <div class="rule-row off">
+      <input type="checkbox" />
+      <div>
+        <div class="rule-name">First-timer welcome card<span class="off-tag">· Off</span></div>
+        <div class="rule-desc">When a brand-new QR scan walks in, suggest a free welcome shot.</div>
+        <span class="rule-chip">Door only</span>
+      </div>
+      <button class="rule-edit" data-prompt="Turn on the First-timer welcome card rule.">Turn on</button>
+    </div>
+  </section>
+
+  <!-- THIS WEEK'S LOG -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Moments this week</div>
+      <div class="meta">14 fired</div>
+    </div>
+    <div style="font-family: var(--display);">
+      <div class="row"><div class="l">Comped dessert · <strong>Riya Sharma</strong> (5th visit)<span class="sub">Sat 03 May · 9:24 PM</span></div><div class="r" style="color: var(--positive);">Booked return</div></div>
+      <div class="row"><div class="l">Welcomed by name · <strong>Zoya Khan</strong><span class="sub">Sat 03 May · 9:42 PM</span></div><div class="r" style="color: var(--ink-2);">VIP</div></div>
+      <div class="row"><div class="l">Comped drink · <strong>Aman R.</strong> (10th visit)<span class="sub">Fri 02 May · 11:08 PM</span></div><div class="r" style="color: var(--positive);">Booked return</div></div>
+      <div class="row"><div class="l">Birthday alert · <strong>Naga Santoshi</strong> (turning 28)<span class="sub">Thu 01 May · 8:50 PM</span></div><div class="r" style="color: var(--positive);">Booked return</div></div>
+      <div class="row"><div class="l">High-spender alert · <strong>SORREALEVENTS</strong><span class="sub">Wed 30 Apr · 9:11 PM</span></div><div class="r" style="color: var(--ink-2);">Hosted</div></div>
+    </div>
+  </section>
+
+  <!-- RULE PERFORMANCE -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Rule performance</div>
+      <div class="meta">30 d</div>
+    </div>
+    <div class="data-table-wrap" style="margin: 0; max-height: none;">
+      <table class="data-table">
+        <thead><tr><th class="first">Rule</th><th class="num">Fired</th><th class="num">Returned</th><th class="num last">Rate</th></tr></thead>
+        <tbody>
+          <tr><td class="name first">5th-visit free dessert</td><td class="num">26</td><td class="num">16</td><td class="num last" style="color: var(--positive);">62%</td></tr>
+          <tr><td class="name first">10th-visit free drink</td><td class="num">9</td><td class="num">7</td><td class="num last" style="color: var(--positive);">78%</td></tr>
+          <tr><td class="name first">Welcome top-50 by name</td><td class="num">44</td><td class="num">31</td><td class="num last" style="color: var(--positive);">71%</td></tr>
+          <tr><td class="name first">Birthday alert</td><td class="num">5</td><td class="num">3</td><td class="num last">60%</td></tr>
+          <tr><td class="name first">High-spender welcome</td><td class="num">3</td><td class="num">3</td><td class="num last" style="color: var(--positive);">100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption"><span class="em">10th-visit drink</span> has the highest return rate. Worth lowering the threshold to 8.</p>
+  </section>
+</div>
+<script src="_shell.js?v=ed17"></script>
+<script>BashShell.mount();</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Staffing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+</head>
+<body>
+<div class="device">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">V · Operations</div>
+    <h1>Your <span class="accent">team</span> &amp; their app activity.</h1>
+    <p class="deck">Manage profiles for waiters, valet and bouncers. See who's logged into the staff app today.</p>
+  </section>
+
+  <nav class="subtab-nav">
+    <a href="ops-reservations.html">Reservations</a>
+    <a class="active" href="ops-staffing.html">Staffing</a>
+    <a class="soon" aria-disabled="true">Service speed</a>
+  </nav>
+
+  <!-- TEAM LEDGER — head count summary -->
+  <div class="ledger reveal">
+    <div class="ledger-cell flag">
+      <div class="lc-label">Owners</div>
+      <div class="lc-value">1</div>
+    </div>
+    <div class="ledger-cell">
+      <div class="lc-label">Managers</div>
+      <div class="lc-value">3</div>
+    </div>
+    <div class="ledger-cell">
+      <div class="lc-label">Waiters</div>
+      <div class="lc-value">4</div>
+    </div>
+    <div class="ledger-cell">
+      <div class="lc-label">Bouncers</div>
+      <div class="lc-value">5</div>
+    </div>
+    <div class="ledger-cell">
+      <div class="lc-label">Valet</div>
+      <div class="lc-value">5</div>
+    </div>
+  </div>
+
+  <!-- APP ACTIVITY LOG — moved to top -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Staff app activity</div>
+      <div class="meta">Last 24 hr · 38 events</div>
+    </div>
+    <div style="font-family: var(--display);">
+      <div class="row">
+        <div class="l">
+          <strong>Bilal K.</strong> · clocked in
+          <span class="sub">Today · 6:02 PM · Bouncer</span>
+        </div>
+        <div class="r" style="color: var(--positive);">on shift</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Suresh M.</strong> · logged table 7 close
+          <span class="sub">Today · 7:48 PM · Waiter · ₹3,210</span>
+        </div>
+        <div class="r" style="color: var(--ink-2);">logged</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Imran S.</strong> · marked 6 valet pickups
+          <span class="sub">Today · 8:14 PM · Valet</span>
+        </div>
+        <div class="r" style="color: var(--ink-2);">logged</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Naveen K.</strong> · clocked in
+          <span class="sub">Today · 6:18 PM · Waiter</span>
+        </div>
+        <div class="r" style="color: var(--positive);">on shift</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Tariq M.</strong> · clocked in
+          <span class="sub">Today · 6:30 PM · Bouncer</span>
+        </div>
+        <div class="r" style="color: var(--positive);">on shift</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Ajay V.</strong> · hasn't opened app
+          <span class="sub">Last seen 19 May · Waiter · 4 days ago</span>
+        </div>
+        <div class="r" style="color: var(--orange);">offline</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Manoj T.</strong> · clocked out
+          <span class="sub">Yesterday · 1:42 AM · Valet · 7.2 hr shift</span>
+        </div>
+        <div class="r" style="color: var(--ink-2);">ended</div>
+      </div>
+      <div class="row">
+        <div class="l">
+          <strong>Salman R.</strong> · raised escalation
+          <span class="sub">Yesterday · 11:08 PM · Bouncer · table 12</span>
+        </div>
+        <div class="r" style="color: var(--ink-2);">handled</div>
+      </div>
+    </div>
+    <p class="caption"><span class="em">2 staff offline for 4+ days</span> — Ajay V. (waiter) and Vinod L. (valet). Worth a check-in.</p>
+  </section>
+
+  <!-- ADD STAFF -->
+  <button class="add-staff reveal" data-prompt="Add a new staff member — walk me through name, role, phone, start date.">
+    <div class="as-plus">+</div>
+    <div class="as-body">
+      <div class="as-title">Add a new staff member</div>
+      <div class="as-sub">Create profile · waiter, valet, bouncer</div>
+    </div>
+  </button>
+
+  <!-- MANAGERS — view-only for other managers -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Managers</div>
+      <div class="meta">3 · owner-managed</div>
+    </div>
+    <div class="staff-cards">
+      <article class="staff-card">
+        <div class="sc-avatar">RP</div>
+        <div class="sc-body">
+          <div class="sc-name">Rohan Pillai <span class="sc-you">You</span></div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 99876 54321</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 5 min ago</span>
+          </div>
+        </div>
+        <div class="sc-readonly">View only</div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">AK</div>
+        <div class="sc-body">
+          <div class="sc-name">Aisha Kapoor</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 98123 45678</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 2 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-readonly">View only</div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">VM</div>
+        <div class="sc-body">
+          <div class="sc-name">Vikram Mehta</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 97234 56789</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 1 d ago</span>
+          </div>
+        </div>
+        <div class="sc-readonly">View only</div>
+      </article>
+    </div>
+    <p class="caption">Only the <span class="em">owner</span> can edit or remove a manager. Ask Bash to flag a change.</p>
+  </section>
+
+  <!-- WAITERS -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Waiters</div>
+      <div class="meta">4 · 3 active today</div>
+    </div>
+    <div class="staff-cards">
+      <article class="staff-card">
+        <div class="sc-avatar">SM</div>
+        <div class="sc-body">
+          <div class="sc-name">Suresh M.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 98765 11223</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 2 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Suresh M.'s waiter profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">NK</div>
+        <div class="sc-body">
+          <div class="sc-name">Naveen K.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 99821 33445</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 3 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Naveen K.'s waiter profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">RP</div>
+        <div class="sc-body">
+          <div class="sc-name">Ramesh P.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 97812 55667</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 4 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Ramesh P.'s waiter profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card flag">
+        <div class="sc-avatar">AV</div>
+        <div class="sc-body">
+          <div class="sc-name">Ajay V.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 88234 77889</span>
+            <span>·</span>
+            <span class="sc-last stale">Offline · 4 d</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Ajay V.'s waiter profile.">Edit</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- VALET -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Valet</div>
+      <div class="meta">5 · 3 active today</div>
+    </div>
+    <div class="staff-cards">
+      <article class="staff-card">
+        <div class="sc-avatar">IS</div>
+        <div class="sc-body">
+          <div class="sc-name">Imran S.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 96712 23344</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 1 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Imran S.'s valet profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">MT</div>
+        <div class="sc-body">
+          <div class="sc-name">Manoj T.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 95623 44556</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 2 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Manoj T.'s valet profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">SR</div>
+        <div class="sc-body">
+          <div class="sc-name">Sandeep R.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 94512 66778</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 3 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Sandeep R.'s valet profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card flag">
+        <div class="sc-avatar">VL</div>
+        <div class="sc-body">
+          <div class="sc-name">Vinod L.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 93423 88990</span>
+            <span>·</span>
+            <span class="sc-last stale">Offline · 8 d</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Vinod L.'s valet profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card flag">
+        <div class="sc-avatar">PH</div>
+        <div class="sc-body">
+          <div class="sc-name">Praveen H.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 92334 99001</span>
+            <span>·</span>
+            <span class="sc-last stale">Offline · 9 d</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Praveen H.'s valet profile.">Edit</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- BOUNCERS -->
+  <section class="sec reveal">
+    <div class="sec-head">
+      <div class="label">Bouncers</div>
+      <div class="meta">5 · 5 active today</div>
+    </div>
+    <div class="staff-cards">
+      <article class="staff-card">
+        <div class="sc-avatar">BK</div>
+        <div class="sc-body">
+          <div class="sc-name">Bilal K.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 91245 11335</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 30 min ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Bilal K.'s bouncer profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">SR</div>
+        <div class="sc-body">
+          <div class="sc-name">Salman R.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 90156 22446</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 1 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Salman R.'s bouncer profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">FA</div>
+        <div class="sc-body">
+          <div class="sc-name">Faizan A.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 89167 33557</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 1 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Faizan A.'s bouncer profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">AN</div>
+        <div class="sc-body">
+          <div class="sc-name">Aslam N.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 88278 44668</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 2 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Aslam N.'s bouncer profile.">Edit</button>
+        </div>
+      </article>
+      <article class="staff-card">
+        <div class="sc-avatar">TM</div>
+        <div class="sc-body">
+          <div class="sc-name">Tariq M.</div>
+          <div class="sc-meta">
+            <span class="sc-phone">+91 87389 55779</span>
+            <span>·</span>
+            <span class="sc-last">Last in app · 2 hr ago</span>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button class="sc-btn edit" data-prompt="Edit Tariq M.'s bouncer profile.">Edit</button>
+        </div>
+      </article>
+    </div>
+  </section>
+</div>
+<script src="_shell.js?v=ed17"></script>
+<script>BashShell.mount();</script>
+</body>
+</html>

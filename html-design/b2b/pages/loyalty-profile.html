@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bash Manager — Look up a guest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css?v=ed17" />
+</head>
+<body>
+<div class="device">
+  <div data-slot="head"></div>
+  <div data-slot="venue"></div>
+
+  <section class="page-head reveal">
+    <div class="kicker">Hospitality</div>
+    <h1>Look up <span class="accent">a guest</span>.</h1>
+    <p class="deck">Search by name or phone. Same data the chat returns when you ask "Look up Riya".</p>
+  </section>
+
+  <nav class="subtab-nav">
+    <a href="loyalty-moments.html">Moments</a>
+    <a class="active" href="loyalty-profile.html">Look up a guest</a>
+  </nav>
+
+  <div class="search-input reveal">
+    <span class="icn">⌕</span>
+    <input type="search" placeholder="Name or phone…" value="Riya Sharma" />
+  </div>
+
+  <!-- PROFILE BLOCK -->
+  <article class="profile-block reveal">
+    <div class="profile-head">
+      <div class="profile-avatar">R</div>
+      <div>
+        <div class="profile-name">Riya Sharma</div>
+        <div class="profile-phone">+91 82345 67891</div>
+        <span class="profile-tag">Regular · 10 visits</span>
+      </div>
+    </div>
+
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="ps-label">Lifetime spend</div><div class="ps-val">₹18,400</div></div>
+      <div class="profile-stat"><div class="ps-label">Avg gap</div><div class="ps-val">9 d</div></div>
+      <div class="profile-stat"><div class="ps-label">Last visit</div><div class="ps-val">1 d</div></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Order prefs</div>
+      <ul>
+        <li>Margherita pizza (8 of 10 visits)</li>
+        <li>House red wine (6 of 10)</li>
+        <li>Tiramisu (4 of 10)</li>
+        <li>Always sits as a couple · prefers booth</li>
+      </ul>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Visit history · 10 visits</div>
+      <ul>
+        <li><span class="when">May 22</span>Reservation · 2 pax · ₹2,140</li>
+        <li><span class="when">May 14</span>Walk-in · 2 pax · ₹1,890</li>
+        <li><span class="when">May 03</span>Reservation · 2 pax · ₹2,400</li>
+        <li><span class="when">Apr 26</span>Walk-in · 2 pax · ₹1,720</li>
+        <li><span class="when">Apr 17</span>Reservation · 4 pax · ₹3,260</li>
+        <li><span class="when">Apr 09</span>Walk-in · 2 pax · ₹1,810</li>
+      </ul>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Hospitality history</div>
+      <ul>
+        <li><span class="when">May 03</span>Comped dessert · 5th-visit rule</li>
+        <li><span class="when">Apr 17</span>Welcomed by name · door</li>
+      </ul>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Private notes</div>
+      <ul>
+        <li>Husband's birthday May 28 — flag a couple booking.</li>
+        <li>Doesn't drink. Always orders mocktails for the table.</li>
+      </ul>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Cross-venue</div>
+      <ul>
+        <li>Also visits <strong>Babylon Brewery</strong> · 4 visits since Mar.</li>
+      </ul>
+    </div>
+
+    <div class="profile-section">
+      <div class="ps-head">Actions</div>
+      <div style="display:flex; flex-wrap: wrap; gap: var(--space-2);">
+        <button class="btn" data-prompt="Add a private note to Riya Sharma's profile.">Add note</button>
+        <button class="btn secondary" data-prompt="Send Riya Sharma a personal message about her husband's May 28 birthday.">Birthday message</button>
+        <button class="btn secondary" data-prompt="Mark Riya Sharma as VIP.">Mark VIP</button>
+        <button class="btn secondary" data-prompt="Comp Riya Sharma's next visit's first round.">Comp next round</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- RECENT SEARCHES -->
+  <section class="sec reveal" style="border-bottom: 0;">
+    <div class="sec-head">
+      <div class="label">Recent searches</div>
+      <div class="meta">Last 7d</div>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <span class="bucket-chip">Zoya Khan</span>
+      <span class="bucket-chip">Aman R.</span>
+      <span class="bucket-chip">+91 96925 35258</span>
+      <span class="bucket-chip">SORREALEVENTS</span>
+      <span class="bucket-chip">Karan Kapoor</span>
+    </div>
+  </section>
+</div>
+<script src="_shell.js?v=ed17"></script>
+<script>BashShell.mount();</script>
+</body>
+</html>

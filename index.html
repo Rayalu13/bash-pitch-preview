@@ -1,0 +1,4989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bash - Investor Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #0d0d0e;
+    --paper-2: #17171a;
+    --ink: #f4f1ea;
+    --ink-2: #b8b3a8;
+    --ink-3: #6f6a62;
+    --rule: #2a2a2e;
+    --orange: #fe8c00;
+    --orange-soft: oklch(0.55 0.18 45);
+    --display: "Faustina", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* Mobile gate — the deck is built for large landscape screens, so on
+     phones / small touch devices we cover it with an "open on desktop" screen. */
+  .mobile-gate { display: none; }
+  @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
+    .mobile-gate {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+      padding: 40px 32px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .mobile-gate .mg-logo { width: 128px; height: auto; opacity: .95; margin-bottom: 6px; }
+    .mobile-gate .mg-title {
+      font-family: var(--display); font-style: italic; font-weight: 500;
+      font-size: clamp(28px, 9vw, 40px); line-height: 1.1; margin: 0;
+    }
+    .mobile-gate .mg-title .em { color: var(--orange); }
+    .mobile-gate .mg-sub {
+      font-family: var(--sans); font-size: clamp(14px, 4vw, 16px);
+      color: var(--ink-2); max-width: 30ch; line-height: 1.5; margin: 0;
+    }
+    .mobile-gate .mg-meta {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--ink-3); margin-top: 12px;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* DECK */
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 36px 56px 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms ease;
+    background: var(--paper);
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+  /* Block hit-testing on descendants of inactive slides - otherwise their iframes
+     (which have their own pointer-events: auto) intercept wheel/click on the
+     currently-active slide because they sit on top in DOM order. */
+  .slide:not(.active) * { pointer-events: none !important; }
+
+  /* MASTHEAD on every slide */
+  .masthead {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 12px; margin-bottom: 22px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    flex-shrink: 0;
+  }
+  .masthead .brand {
+    display: block;
+    height: 22px;
+    width: auto;
+  }
+
+  /* SLIDE CONTENT */
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 24px;
+  }
+  .headline {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(48px, 6vw, 92px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    max-width: 18ch;
+    margin-bottom: 32px;
+  }
+  .headline .em {
+    font-style: italic;
+    color: var(--orange);
+    font-weight: 500;
+  }
+  .dek {
+    font-family: var(--display);
+    font-size: clamp(20px, 1.6vw, 26px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 60ch;
+    font-weight: 400;
+  }
+  .dek em { font-style: italic; color: var(--ink); }
+
+  /* TWO-COLUMN LAYOUT (text + visual) */
+  .split {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 64px;
+    flex: 1;
+    align-items: center;
+  }
+  .split-text { display: flex; flex-direction: column; justify-content: center; }
+  .split-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  /* PHONE MOCKUP FRAME */
+  .phone {
+    position: relative;
+    width: 380px;
+    height: 760px;
+    background: #121212;
+    border: 1px solid #1a1a1a;
+    border-radius: 44px;
+    padding: 12px;
+    box-shadow:
+      0 40px 100px -20px rgba(0, 0, 0, 0.6),
+      0 12px 40px -10px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 18px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 28px;
+    background: #0d0d0e;
+    border-radius: 16px;
+    z-index: 2;
+  }
+  .phone .screen {
+    width: 100%; height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--paper);
+    position: relative;
+  }
+  .phone iframe {
+    width: 100%; height: 100%;
+    border: 0;
+    display: block;
+  }
+  .phone img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .phone .placeholder {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--paper-2);
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 24px;
+  }
+  .phone .placeholder .ph-title {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--ink-2);
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+
+  /* FEATURE BULLETS */
+  .features {
+    list-style: none;
+    margin-top: 28px;
+    display: grid;
+    gap: 14px;
+  }
+  .features li {
+    padding-left: 24px;
+    position: relative;
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .features li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 10px;
+    width: 10px; height: 1px;
+    background: var(--orange);
+  }
+  .features li strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* TITLE SLIDE */
+  .title-slide {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px;
+  }
+  .title-slide .brand-big {
+    display: block;
+    width: clamp(280px, 36vw, 480px);
+    height: auto;
+    margin: 0 auto 40px;
+  }
+  .title-slide .tagline {
+    font-family: var(--display);
+    font-size: clamp(24px, 2.2vw, 34px);
+    color: var(--ink-2);
+    line-height: 1.3;
+    max-width: 30ch;
+    margin: 0 auto;
+  }
+  .title-slide .tagline .em { color: var(--orange); font-style: italic; }
+  .title-slide .meta {
+    margin-top: 56px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* OVERVIEW (4 tools grid) */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+    margin-top: 40px;
+    flex: 1;
+  }
+  .tool-card {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-2);
+    transition: border-color 200ms;
+  }
+  .tool-card:hover { border-color: var(--ink); }
+  .tool-card .tc-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--orange);
+    margin-bottom: 16px;
+  }
+  .tool-card .tc-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 38px;
+    line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .tool-card .tc-body {
+    font-family: var(--display);
+    font-size: 18px;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+
+  /* NAV / CHROME */
+  .nav {
+    position: fixed;
+    bottom: 24px; right: 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    z-index: 100;
+  }
+  .nav button {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    width: 32px; height: 32px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 150ms;
+  }
+  .nav button:hover { border-color: var(--ink); color: var(--ink); }
+  .nav .counter { min-width: 50px; text-align: center; }
+
+  .hint {
+    position: fixed;
+    bottom: 24px; left: 32px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    z-index: 100;
+  }
+  .hint kbd {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: inherit;
+    font-size: 9px;
+  }
+
+  /* SURFACE SLIDE - compact header, big phones up top, descriptions below */
+  .surface-slide { padding-bottom: 36px; }
+  .surface-headline {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+  }
+  .surface-headline .kicker { margin-bottom: 0; flex-shrink: 0; }
+  .surface-headline h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(24px, 2.4vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+    flex: 1;
+  }
+  .surface-headline h1 em {
+    color: var(--orange);
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .surface-row {
+    flex: 1;
+    display: flex;
+    gap: clamp(24px, 2.4vw, 48px);
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  .mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: 300px;
+  }
+  .mini-info {
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    margin-top: 16px;
+    flex-shrink: 0;
+  }
+  .mini-info .num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    color: var(--orange);
+  }
+  .mini-info .name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(16px, 1.3vw, 22px);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .mini-info .desc {
+    font-family: var(--display);
+    font-size: clamp(12px, 0.9vw, 14px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 24ch;
+    margin-top: 2px;
+  }
+
+  .mini-phone {
+    /* Three constraints:
+       - vertical: slide chrome (~290px) reserved for masthead + headline + info block
+       - horizontal: 4 phones must fit across the viewport
+       - .mini parent caps at 340px; phone width = height × 9/19, so cap height
+         at 340 × 19/9 ≈ 718 so phones never overflow their flex slot at large
+         viewports (e.g. fullscreen) and visually collide with neighbours. */
+    height: min(
+      calc(100vh - 290px),
+      calc((100vw - 180px) / 4 * 19 / 9),
+      calc(300px * 19 / 9)
+    );
+    aspect-ratio: 9 / 19;
+    width: auto;
+    border-radius: clamp(22px, 2vw, 36px);
+    padding: clamp(5px, 0.6vw, 8px);
+    order: 1;
+    flex-shrink: 0;
+    /* Match the slide-5 .demo-phone frame finish - flat (no shadow halo) */
+    background: #121212;
+    border: 1px solid var(--rule);
+    box-shadow: none;
+  }
+  /* No notch - clean rounded slab */
+  .mini-phone::before { display: none; }
+  .mini-phone .screen {
+    border-radius: clamp(16px, 1.6vw, 28px);
+    background: #ffffff;
+    pointer-events: auto;
+    overflow: hidden;
+    position: relative;
+  }
+  .mini-phone iframe {
+    position: absolute;
+    top: 0; left: 0;
+    border: 0;
+    display: block;
+    background: #ffffff;
+    transform-origin: top left;
+    /* width / height / transform set by JS to render at true mobile viewport */
+  }
+
+  /* ---- Slide 2: phone focus mode (spotlight + solo) ---- */
+  .surface-slide .mini { transition: opacity 320ms ease, filter 320ms ease, transform 360ms cubic-bezier(.2,.8,.2,1); }
+  .surface-slide .mini-phone { transition: transform 360ms cubic-bezier(.2,.8,.2,1), box-shadow 320ms ease, border-color 320ms ease; will-change: transform; cursor: zoom-in; }
+  .surface-slide .mini-info { transition: opacity 220ms ease, transform 220ms ease; }
+  .surface-slide .surface-headline,
+  .surface-slide .masthead { transition: opacity 320ms ease; }
+
+  .surface-slide.fx-spotlight .mini.is-dimmed { opacity: 0.14; filter: blur(2px) saturate(0.6); pointer-events: none; }
+  .surface-slide.fx-spotlight .mini.is-focused { z-index: 10; }
+  .surface-slide.fx-spotlight .mini.is-focused .mini-phone {
+    cursor: zoom-out;
+    /* Deep editorial lift — heavier black drop-shadow only, no colored halo. */
+    box-shadow:
+      0 50px 100px -28px rgba(0,0,0,0.9),
+      0 20px 40px -12px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+  .surface-slide.fx-spotlight .mini.is-focused .mini-info { opacity: 0; transform: translateY(6px); }
+  .surface-slide.fx-spotlight .surface-headline { opacity: 0.32; }
+
+  .focus-hint {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    pointer-events: none;
+    opacity: 0.45;
+    transition: opacity 320ms ease;
+    z-index: 20;
+  }
+  .surface-slide.fx-spotlight .focus-hint { opacity: 0.85; color: var(--ink-2); }
+  .focus-hint .grp { display: inline-flex; gap: 6px; align-items: center; }
+  .focus-hint kbd {
+    font: inherit;
+    padding: 2px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    color: var(--ink-2);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .focus-dismiss {
+    position: absolute;
+    top: 28px;
+    right: 56px;
+    z-index: 30;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease, color 200ms ease, border-color 200ms ease;
+  }
+  .focus-dismiss:hover { color: var(--ink); border-color: var(--ink-2); }
+  .surface-slide.fx-spotlight .focus-dismiss { opacity: 1; pointer-events: auto; }
+
+  /* Catch-all dismiss layer — sits behind the focused phone (z 10) but above
+     all other slide content. Any click outside the focused phone dismisses.
+     Solves dead zones (clicking the .mini wrapper, clicking after iframe
+     interaction, etc.). */
+  .focus-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+    cursor: zoom-out;
+    transition: opacity 280ms ease;
+  }
+  .surface-slide.fx-spotlight .focus-backdrop,
+  .brief-slide.fx-spotlight .focus-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ---- Slide 5: same focus treatment, single phone ---- */
+  .brief-slide .demo-phone { transition: transform 360ms cubic-bezier(.2,.8,.2,1), box-shadow 320ms ease; will-change: transform; cursor: zoom-in; }
+  .brief-slide .brief-text,
+  .brief-slide .surface-headline,
+  .brief-slide .masthead { transition: opacity 320ms ease, filter 320ms ease; }
+
+  .brief-slide.fx-spotlight .brief-text { opacity: 0.14; filter: blur(2px) saturate(0.6); pointer-events: none; }
+  .brief-slide.fx-spotlight .surface-headline { opacity: 0.32; }
+  .brief-slide.fx-spotlight .brief-visual { position: relative; z-index: 10; }
+  .brief-slide.fx-spotlight .demo-phone {
+    cursor: zoom-out;
+    box-shadow:
+      0 50px 100px -28px rgba(0,0,0,0.9),
+      0 20px 40px -12px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+  .brief-slide.fx-spotlight .demo-phone .screen { cursor: auto; }
+  .brief-slide .focus-hint { color: var(--ink-3); }
+  .brief-slide.fx-spotlight .focus-hint { opacity: 0.85; color: var(--ink-2); }
+  .brief-slide.fx-spotlight .focus-dismiss { opacity: 1; pointer-events: auto; }
+
+  /* SLIDE 3 - CUSTOMER GRAPH (data sources → customer) */
+  .graph-slide { padding-bottom: 36px; }
+  .graph-stage {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(240px, 0.85fr) minmax(160px, 1.1fr) minmax(280px, 1fr);
+    gap: clamp(16px, 1.8vw, 32px);
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  /* LEFT - 4 source cards stacked */
+  .graph-sources {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(10px, 1.2vw, 18px);
+    min-width: 0;
+    height: 100%;
+  }
+  .source {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: clamp(10px, 0.9vw, 14px) clamp(12px, 1.1vw, 18px);
+    background: var(--paper-2);
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    position: relative;
+  }
+  .source::after {
+    content: "";
+    position: absolute;
+    right: -6px; top: 50%;
+    width: 10px; height: 10px;
+    background: var(--orange);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 14px rgba(254, 140, 0, 0.55);
+    z-index: 3;
+  }
+  .source .src-head {
+    display: flex; align-items: baseline; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .source .src-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--orange);
+  }
+  .source .src-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(15px, 1.2vw, 19px);
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .source ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+  }
+  .source ul li {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.78vw, 12px);
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .source ul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.7em;
+    width: 6px; height: 1px;
+    background: var(--orange);
+    opacity: 0.7;
+  }
+
+  /* MIDDLE - flow lines + signal chips */
+  .graph-flow {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+  }
+  .graph-flow svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .graph-flow .flow-path {
+    fill: none;
+    stroke: url(#flowGrad);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+    stroke-linecap: round;
+  }
+  .graph-flow .flow-path.dashed {
+    stroke-dasharray: 4 6;
+    animation: flow-march 2.4s linear infinite;
+    opacity: 0.55;
+  }
+  @keyframes flow-march {
+    to { stroke-dashoffset: -10; }
+  }
+  /* CSS custom property animated via @property so each pulse can have a per-path travel distance set by JS (matching that path's true visual pixel length) - otherwise preserveAspectRatio="none" + non-scaling-stroke makes dasharray repeat across the curve. */
+  @property --pulse-travel {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: -800px;
+  }
+
+  /* BRIGHT TRAVELING PULSES - 6 events, each on its own color, fires at its own time across a 14s cycle. Valet curve carries 3 pulses (entry / call / collect) but they never overlap. */
+  .graph-flow .flow-pulse {
+    fill: none;
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+    stroke-linecap: round;
+    /* gap is huge so only one dash is ever visible on the path; JS sets per-path --pulse-travel to that path's visual length so the dash traverses cleanly. */
+    stroke-dasharray: 6 9999;
+    animation-duration: 14s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  /* event 1 - Car entered (valet · bottom curve · orange) */
+  .graph-flow .flow-pulse.e1 {
+    stroke: #fe8c00;
+    filter: drop-shadow(0 0 6px rgba(254, 140, 0, 0.95));
+    animation-name: pulse-e1;
+  }
+  /* event 2 - Walked in (register · teal) */
+  .graph-flow .flow-pulse.e2 {
+    stroke: #5dd9b9;
+    filter: drop-shadow(0 0 6px rgba(93, 217, 185, 0.95));
+    animation-name: pulse-e2;
+  }
+  /* event 3 - Viewed menu (menu · sky blue) */
+  .graph-flow .flow-pulse.e3 {
+    stroke: #6fb6e8;
+    filter: drop-shadow(0 0 6px rgba(111, 182, 232, 0.95));
+    animation-name: pulse-e3;
+  }
+  /* event 4 - Ordered (ticketing / bill · magenta) */
+  .graph-flow .flow-pulse.e4 {
+    stroke: #e879c8;
+    filter: drop-shadow(0 0 7px rgba(232, 121, 200, 0.95));
+    animation-name: pulse-e4;
+  }
+  /* event 5 - Bought 2 tickets for next Sunday (bill curve · purple) */
+  .graph-flow .flow-pulse.e5 {
+    stroke: #b794f4;
+    filter: drop-shadow(0 0 7px rgba(183, 148, 244, 0.95));
+    animation-name: pulse-e5;
+  }
+  /* event 6 - Called valet (valet curve · amber) */
+  .graph-flow .flow-pulse.e6 {
+    stroke: #ffd166;
+    filter: drop-shadow(0 0 8px rgba(255, 209, 102, 1));
+    animation-name: pulse-e6;
+  }
+  /* event 7 - Car collected · she leaves (valet curve · bright lime · LIVE moment) */
+  .graph-flow .flow-pulse.e7 {
+    stroke: #c2f54b;
+    filter: drop-shadow(0 0 9px rgba(194, 245, 75, 1));
+    animation-name: pulse-e7;
+  }
+  /* 7 events on a 14s cycle. Pulses fire every 11% starting at 0%, each travels for ~9%. Bill curve carries e4 + e5 (tight back-to-back); Valet curve carries e1, e6, e7 - none overlap. */
+  @keyframes pulse-e1 {
+    0%        { stroke-dashoffset: 0; opacity: 1; }
+    9%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    10%, 100% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e2 {
+    0%, 10.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    11%        { stroke-dashoffset: 0;                   opacity: 1; }
+    20%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    21%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e3 {
+    0%, 21.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    22%        { stroke-dashoffset: 0;                   opacity: 1; }
+    31%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    32%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e4 {
+    0%, 32.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    33%        { stroke-dashoffset: 0;                   opacity: 1; }
+    42%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    43%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e5 {
+    0%, 43.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    44%        { stroke-dashoffset: 0;                   opacity: 1; }
+    53%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    54%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e6 {
+    0%, 54.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    55%        { stroke-dashoffset: 0;                   opacity: 1; }
+    64%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    65%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+  @keyframes pulse-e7 {
+    0%, 65.99% { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+    66%        { stroke-dashoffset: 0;                   opacity: 1; }
+    75%        { stroke-dashoffset: var(--pulse-travel); opacity: 1; }
+    76%, 100%  { stroke-dashoffset: var(--pulse-travel); opacity: 0; }
+  }
+
+  /* When a pulse arrives at the card, its matching row pops in. */
+  @keyframes feed-e1 {
+    0%, 9%    { opacity: 0; transform: translateY(-4px); }
+    12%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e2 {
+    0%, 20%   { opacity: 0; transform: translateY(-4px); }
+    23%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e3 {
+    0%, 31%   { opacity: 0; transform: translateY(-4px); }
+    34%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e4 {
+    0%, 42%   { opacity: 0; transform: translateY(-4px); }
+    45%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e5 {
+    0%, 53%   { opacity: 0; transform: translateY(-4px); }
+    56%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e6 {
+    0%, 64%   { opacity: 0; transform: translateY(-4px); }
+    67%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes feed-e7 {
+    0%, 75%   { opacity: 0; transform: translateY(-4px); }
+    78%       { opacity: 1; transform: translateY(0); }
+    97%       { opacity: 1; transform: translateY(0); }
+    100%      { opacity: 0; transform: translateY(-4px); }
+  }
+  /* Last (closing / NOW) row flashes lime when the e7 pulse lands */
+  @keyframes now-flash {
+    0%, 75%   { background: transparent; }
+    78%       { background: rgba(194, 245, 75, 0.20); }
+    92%, 100% { background: transparent; }
+  }
+  .signal-chip {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-family: var(--mono);
+    font-size: clamp(9px, 0.7vw, 11px);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 4px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    z-index: 2;
+  }
+  .signal-chip strong { color: var(--orange); font-weight: 600; }
+  .signal-chip.chip-menu     strong { color: #6fb6e8; }
+  .signal-chip.chip-menu     { border-color: rgba(111, 182, 232, 0.45); }
+  .signal-chip.chip-register strong { color: #5dd9b9; }
+  .signal-chip.chip-register { border-color: rgba(93, 217, 185, 0.45); }
+  .signal-chip.chip-bill     strong { color: #e879c8; }
+  .signal-chip.chip-bill     { border-color: rgba(232, 121, 200, 0.45); }
+  .signal-chip.chip-valet    strong { color: #fe8c00; }
+  .signal-chip.chip-valet    { border-color: rgba(254, 140, 0, 0.55); }
+
+  /* RIGHT - customer profile card */
+  .profile-pane {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+  }
+  .profile-pane::before {
+    content: "";
+    position: absolute;
+    left: -6px; top: 50%;
+    width: 10px; height: 10px;
+    background: var(--orange);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 18px rgba(254, 140, 0, 0.7);
+    z-index: 3;
+  }
+  .profile-card {
+    width: 100%;
+    border: 1px solid var(--ink);
+    border-radius: 6px;
+    padding: clamp(16px, 1.6vw, 24px);
+    background: linear-gradient(180deg, rgba(254, 140, 0, 0.05), transparent 60%), var(--paper-2);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.2vw, 18px);
+    position: relative;
+    box-shadow: 0 30px 80px -30px rgba(254, 140, 0, 0.18);
+  }
+  .pc-tag {
+    position: absolute;
+    top: -10px; left: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    background: var(--paper);
+    padding: 0 8px;
+  }
+  .pc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pc-avatar {
+    width: clamp(36px, 3.2vw, 48px);
+    height: clamp(36px, 3.2vw, 48px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), var(--orange-soft));
+    color: var(--paper);
+    display: grid;
+    place-items: center;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(18px, 1.6vw, 22px);
+    flex-shrink: 0;
+  }
+  .pc-id { flex: 1; min-width: 0; }
+  .pc-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(20px, 1.7vw, 26px);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .pc-meta {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.78vw, 12px);
+    color: var(--ink-2);
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+  .pc-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    border: 1px solid var(--orange);
+    padding: 3px 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .pc-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: clamp(10px, 1vw, 14px) 0 0;
+    border-top: 1px solid var(--rule);
+  }
+  .pc-stats > div { display: flex; flex-direction: column; gap: 4px; }
+  .ps-k {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .ps-v {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(16px, 1.4vw, 22px);
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    transition: color 0.6s ease-out;
+  }
+  .ps-v.flash {
+    animation: ps-flash 0.9s ease-out;
+  }
+  @keyframes ps-flash {
+    0%   { color: var(--orange); transform: translateY(-2px); }
+    40%  { color: var(--orange); transform: translateY(0); }
+    100% { color: var(--ink);    transform: translateY(0); }
+  }
+  /* Inner sections of profile card */
+  .pc-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--rule);
+    padding-top: clamp(10px, 1vw, 14px);
+  }
+
+  /* LIVE ACTIVITY FEED */
+  .feed-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .live-pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 0 0 rgba(254, 140, 0, 0.7);
+    animation: live-pulse 1.4s ease-out infinite;
+  }
+  @keyframes live-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(254, 140, 0, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(254, 140, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(254, 140, 0, 0); }
+  }
+  .feed-head .live-label { color: var(--orange); }
+  .feed-head .spacer { flex: 1; }
+
+  .activity-feed {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+  }
+  .activity-feed li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: baseline;
+    font-family: var(--sans);
+    font-size: clamp(12px, 0.95vw, 14px);
+    line-height: 1.35;
+    color: var(--ink);
+    position: relative;
+    padding-left: 14px;
+    opacity: 0;
+    animation-duration: 14s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+  }
+  /* Top-to-bottom chronological - first event at top, newest at bottom. Each row matches its pulse's color via the ::before dot, and appears just after its pulse lands. */
+  .activity-feed li:nth-child(1) { animation-name: feed-e1; }
+  .activity-feed li:nth-child(2) { animation-name: feed-e2; }
+  .activity-feed li:nth-child(3) { animation-name: feed-e3; }
+  .activity-feed li:nth-child(4) { animation-name: feed-e4; }
+  .activity-feed li:nth-child(5) { animation-name: feed-e5; }
+  .activity-feed li:nth-child(6) { animation-name: feed-e6; }
+  .activity-feed li:nth-child(7) { animation-name: feed-e7; }
+
+  .activity-feed li:nth-child(1)::before { background: #fe8c00; box-shadow: 0 0 8px rgba(254, 140, 0, 0.75); }
+  .activity-feed li:nth-child(2)::before { background: #5dd9b9; box-shadow: 0 0 8px rgba(93, 217, 185, 0.75); }
+  .activity-feed li:nth-child(3)::before { background: #6fb6e8; box-shadow: 0 0 8px rgba(111, 182, 232, 0.75); }
+  .activity-feed li:nth-child(4)::before { background: #e879c8; box-shadow: 0 0 8px rgba(232, 121, 200, 0.85); }
+  .activity-feed li:nth-child(5)::before { background: #b794f4; box-shadow: 0 0 8px rgba(183, 148, 244, 0.85); }
+  .activity-feed li:nth-child(6)::before { background: #ffd166; box-shadow: 0 0 8px rgba(255, 209, 102, 0.85); }
+  .activity-feed li:nth-child(7)::before { background: #c2f54b; box-shadow: 0 0 10px rgba(194, 245, 75, 0.95); }
+  .activity-feed li:nth-child(1) .when { color: #fe8c00; }
+  .activity-feed li:nth-child(2) .when { color: #5dd9b9; }
+  .activity-feed li:nth-child(3) .when { color: #6fb6e8; }
+  .activity-feed li:nth-child(4) .when { color: #e879c8; }
+  .activity-feed li:nth-child(5) .when { color: #b794f4; }
+  .activity-feed li:nth-child(6) .when { color: #ffd166; }
+  .activity-feed li:nth-child(7) .when { color: #c2f54b; }
+
+  .activity-feed li.now {
+    border-radius: 3px;
+    margin: -2px -6px;
+    padding: 2px 6px 2px 20px;
+    animation: feed-e7 14s ease-out infinite, now-flash 14s ease-out infinite;
+  }
+  .activity-feed li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 7px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .activity-feed .when {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .activity-feed .what em {
+    font-style: italic;
+    color: var(--ink-2);
+  }
+
+  /* AI INFERENCES ROW */
+  .ai-row {
+    border-top: 1px solid var(--rule);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ai-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .ai-label .ai-spark {
+    color: var(--orange);
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    font-size: 14px;
+  }
+  /* Trait list - label in mono uppercase, value in display sans, with proper gap */
+  .pc-traits {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pc-traits li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-family: var(--display);
+    font-size: clamp(12px, 1vw, 14px);
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .pc-traits li > span {
+    flex: 0 0 72px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .ai-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ai-tags span {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    background: rgba(254, 140, 0, 0.08);
+    border: 1px solid rgba(254, 140, 0, 0.35);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* SLIDE 4 - TWO COMPOUNDING FLYWHEELS (2x2 square quad grids) */
+  .data-slide { padding-bottom: 28px; }
+
+  /* ===== TWO FLYWHEEL GRIDS - 2×2 cards + perimeter loop arrows (no hub) ===== */
+  .fw-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(40px, 5vw, 100px);
+    align-items: center;
+    justify-items: center;
+    min-height: 0;
+    position: relative;
+  }
+
+  .fw-wheel-col { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 1.4vw, 20px); width: 100%; }
+  .fw-wheel-head {
+    grid-area: hub;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 22ch;
+    padding: 0 4px;
+  }
+  .fw-wheel-head .kicker {
+    display: block;
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.9vw, 14px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 8px;
+  }
+  .fw-wheel-head h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(16px, 1.4vw, 22px);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .fw-wheel-head h2 em { font-style: italic; color: var(--orange); font-weight: 500; }
+
+  /* The flywheel: 4 cards arranged radially around a glowing hub, with curved
+     arrows showing clockwise rotation (01 → 02 → 03 → 04 → 01). */
+  .fw-wheel {
+    position: relative;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      ".    top   ."
+      "left hub   right"
+      ".    bot   .";
+    column-gap: clamp(20px, 2vw, 40px);
+    row-gap: clamp(16px, 1.6vw, 28px);
+    align-items: center;
+    justify-items: stretch;
+    isolation: isolate;
+  }
+  .fw-arcs {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+  }
+  .fw-arcs .ring {
+    fill: none;
+    stroke: var(--orange);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-dasharray: 0.1 7;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 4px rgba(254, 140, 0, 0.55));
+    animation: fw-ring-flow 22s linear infinite;
+  }
+  @keyframes fw-ring-flow {
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: -440; }
+  }
+
+  .fw-cards { display: contents; }
+  .fw-card[data-pos="top"]    { grid-area: top; }
+  .fw-card[data-pos="right"]  { grid-area: right; }
+  .fw-card[data-pos="bottom"] { grid-area: bot; }
+  .fw-card[data-pos="left"]   { grid-area: left; }
+
+  .fw-card {
+    position: relative;
+    z-index: 1;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: clamp(14px, 1.3vw, 22px) clamp(16px, 1.5vw, 24px);
+    background: var(--paper-2);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+  }
+  .fw-card .num {
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.9vw, 13px);
+    letter-spacing: 0.22em;
+    color: var(--orange);
+  }
+  .fw-card .name {
+    font-family: var(--display);
+    font-style: normal;
+    font-weight: 600;
+    font-size: clamp(17px, 1.4vw, 22px);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .fw-card .name em {
+    font-style: italic;
+    color: var(--orange);
+    font-weight: 500;
+  }
+  .fw-card .line {
+    font-family: var(--display);
+    font-size: clamp(13px, 1vw, 16px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .fw-card .line em { font-style: italic; color: var(--ink); }
+
+  /* CENTER HUB - sits in the middle column between the two wheels */
+  .fw-hub-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .fw-hub {
+    grid-area: hub;
+    position: relative;
+    z-index: 2;
+    width: clamp(110px, 9.5vw, 150px);
+    height: clamp(110px, 9.5vw, 150px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #FFB04A 0%, #FE8C00 55%, #A14400 100%);
+    box-shadow: 0 0 40px rgba(254,140,0,0.55), 0 0 0 1.5px rgba(254,140,0,0.6), 0 0 0 18px rgba(254,140,0,0.06);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    animation: fw-hub-breathe 3.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes fw-hub-breathe {
+    0%, 100% { box-shadow: 0 0 30px rgba(254,140,0,0.45), 0 0 0 1.5px rgba(254,140,0,0.55), 0 0 0 14px rgba(254,140,0,0.05); transform: scale(1); }
+    50%      { box-shadow: 0 0 60px rgba(254,140,0,0.85), 0 0 0 1.5px rgba(254,140,0,0.85), 0 0 0 22px rgba(254,140,0,0.10); transform: scale(1.04); }
+  }
+  .fw-hub .kicker {
+    font-family: var(--mono);
+    font-size: clamp(9px, 0.72vw, 11px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.88);
+    line-height: 1;
+  }
+  .fw-hub .name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 700;
+    font-size: clamp(20px, 1.7vw, 28px);
+    color: #fff;
+    margin-top: 6px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .fw-hub .sub {
+    font-family: var(--mono);
+    font-size: clamp(8px, 0.65vw, 10px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-top: 6px;
+  }
+  .fw-hub-arrow {
+    font-family: var(--mono);
+    font-size: clamp(9px, 0.75vw, 11px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: center;
+    max-width: 14ch;
+    line-height: 1.4;
+  }
+  .fw-hub-arrow em { color: var(--orange); font-style: normal; }
+
+  /* Bottom outputs strip */
+  .fw-outputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(40px, 5vw, 100px);
+    margin-top: clamp(10px, 1.5vw, 22px);
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+  .fw-out-col { display: flex; flex-direction: column; gap: 4px; }
+  .fw-out-col .label {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.85vw, 12px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+  }
+  .fw-out-col .line {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.1vw, 17px);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .fw-out-col .line em { font-style: italic; color: var(--orange); font-weight: 500; }
+
+  /* SLIDE 5 - LIVE HOSPITALITY · BASH MANAGER (b2b demo) */
+  .brief-slide { padding-bottom: 36px; }
+  .brief-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(36px, 4vw, 80px);
+    align-items: center;
+    min-height: 0;
+  }
+  .brief-text {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(18px, 1.8vw, 28px);
+    min-height: 0;
+    justify-content: center;
+  }
+  .brief-lede {
+    font-family: var(--display);
+    font-size: clamp(18px, 1.5vw, 24px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 36ch;
+  }
+  .brief-lede em { font-style: italic; color: var(--ink); }
+  .brief-lede strong {
+    font-weight: 600;
+    color: var(--orange);
+    font-style: italic;
+  }
+  .brief-caps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(12px, 1.2vw, 20px);
+    max-width: 640px;
+  }
+  .brief-cap {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: clamp(12px, 1.1vw, 18px) clamp(14px, 1.3vw, 20px);
+    background: var(--paper-2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .brief-cap .bc-num {
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.9vw, 13px);
+    letter-spacing: 0.22em;
+    color: var(--orange);
+  }
+  .brief-cap .bc-name {
+    font-family: var(--display);
+    font-style: normal;
+    font-weight: 600;
+    font-size: clamp(17px, 1.4vw, 22px);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .brief-cap .bc-name em {
+    font-style: italic;
+    color: var(--orange);
+    font-weight: 500;
+  }
+  .brief-cap .bc-desc {
+    font-family: var(--display);
+    font-size: clamp(13px, 1vw, 16px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .brief-cap .bc-desc em { font-style: italic; color: var(--ink); }
+
+  .brief-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    height: 100%;
+    position: relative;
+  }
+  .demo-phone {
+    height: min(
+      calc(100vh - 200px),
+      calc((100vw - 180px) / 2 * 0.55 * 19 / 9)
+    );
+    aspect-ratio: 9 / 19;
+    width: auto;
+    border-radius: clamp(26px, 2.4vw, 42px);
+    padding: clamp(6px, 0.7vw, 10px);
+    background: #121212;
+    border: 1px solid var(--rule);
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.02) inset,
+      0 0 100px -30px rgba(254, 140, 0, 0.25);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .demo-phone::before { display: none; }
+  .demo-phone .screen {
+    border-radius: clamp(20px, 1.9vw, 32px);
+    background: #ffffff;
+    pointer-events: auto;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .demo-phone iframe {
+    position: absolute;
+    top: 0; left: 0;
+    border: 0;
+    display: block;
+    background: #ffffff;
+    transform-origin: top left;
+    /* width / height / transform set by JS */
+  }
+  .demo-tag {
+    position: absolute;
+    top: 8px;
+    right: -2px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--orange);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .demo-tag .live-pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 8px rgba(254, 140, 0, 0.8);
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+
+  /* ========================================================================
+     B2C SECTION (slides 6–10)
+     ====================================================================== */
+
+  /* Slide 6 - B2C intro (mirror of title-slide; second-act break). */
+  .title-slide.intro-b2c .act-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 28px;
+  }
+  .title-slide.intro-b2c .act-tag .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--orange);
+    margin: 0 12px 2px;
+    vertical-align: middle;
+    box-shadow: 0 0 10px rgba(254,140,0,0.7);
+  }
+  .title-slide.intro-b2c .stamps {
+    margin-top: 36px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 720px;
+  }
+  .title-slide.intro-b2c .stamps span {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    border: 1px solid var(--rule);
+    padding: 6px 12px;
+    border-radius: 2px;
+  }
+  .title-slide.intro-b2c .stamps span em {
+    color: var(--orange);
+    font-style: normal;
+  }
+
+  /* Slide 7 - Consumer Loop + Data Collection.
+     Layout reuses brief-stage but the right column carries a data-dossier
+     panel (4 buckets of fields we collect per user) instead of a demo phone. */
+  .consumer-slide { padding-bottom: 32px; }
+  .consumer-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(36px, 4vw, 80px);
+    align-items: stretch;
+    min-height: 0;
+  }
+  .consumer-text {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 1.6vw, 26px);
+    min-height: 0;
+    justify-content: center;
+  }
+
+  .dossier {
+    border: 1px solid var(--ink);
+    border-radius: 6px;
+    padding: clamp(16px, 1.5vw, 24px);
+    background: linear-gradient(180deg, rgba(254,140,0,0.04), transparent 55%), var(--paper-2);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.2vw, 18px);
+    position: relative;
+    box-shadow: 0 30px 80px -30px rgba(254,140,0,0.18);
+    height: 100%;
+  }
+  .dossier .pc-tag {
+    position: absolute;
+    top: -10px; left: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    background: var(--paper);
+    padding: 0 8px;
+  }
+  .dossier .dos-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 12px;
+  }
+  .dossier .dos-title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(18px, 1.5vw, 24px);
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .dossier .dos-title em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .dossier .dos-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .dossier .dos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(10px, 1vw, 16px);
+    flex: 1;
+  }
+  .dossier .dos-bucket {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dossier .dos-k {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .dossier .dos-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .dossier .dos-list li {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.78vw, 12px);
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    padding-left: 12px;
+    position: relative;
+  }
+  .dossier .dos-list li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.7em;
+    width: 6px; height: 1px;
+    background: var(--orange);
+    opacity: 0.65;
+  }
+  .dossier .dos-leverage {
+    border-top: 1px solid var(--rule);
+    padding-top: clamp(12px, 1.2vw, 16px);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dossier .dos-leverage .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .dossier .dos-leverage .line {
+    font-family: var(--display);
+    font-size: clamp(15px, 1.2vw, 19px);
+    line-height: 1.35;
+    color: var(--ink);
+  }
+  .dossier .dos-leverage .line em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .dossier .dos-leverage .line strong { color: var(--orange); font-weight: 600; }
+
+  /* Slide 8 - Bash AI for the consumer.
+     Reuses brief-stage. Right column carries an agent-handshake illustration
+     (squad chat → Bash agent → venue Bash Manager). */
+  .agent-stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .agent-board {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1vw, 14px);
+  }
+  .agent-row {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .agent-row .agent-who {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: right;
+    padding-top: 12px;
+    line-height: 1.3;
+  }
+  .agent-row .agent-who strong { color: var(--orange); font-weight: 500; }
+  .agent-bubble {
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: clamp(10px, 0.9vw, 14px) clamp(12px, 1.1vw, 16px);
+    background: var(--paper-2);
+    font-family: var(--display);
+    font-size: clamp(13px, 1vw, 16px);
+    line-height: 1.4;
+    color: var(--ink);
+    position: relative;
+  }
+  .agent-bubble em { font-style: italic; color: var(--orange); }
+  .agent-bubble.user { background: var(--paper-2); }
+  .agent-bubble.bash {
+    border-color: rgba(254,140,0,0.45);
+    background: linear-gradient(180deg, rgba(254,140,0,0.06), transparent 60%), var(--paper-2);
+  }
+  .agent-bubble.bash::before {
+    content: "✦";
+    position: absolute;
+    top: 10px; left: -10px;
+    width: 18px; height: 18px;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    border: 1px solid rgba(254,140,0,0.55);
+    border-radius: 50%;
+    color: var(--orange);
+    font-size: 10px;
+    line-height: 1;
+  }
+  .agent-bubble.venue {
+    border-color: rgba(93,217,185,0.45);
+    background: linear-gradient(180deg, rgba(93,217,185,0.06), transparent 60%), var(--paper-2);
+  }
+  .agent-bubble.venue::before {
+    content: "▲";
+    position: absolute;
+    top: 10px; left: -10px;
+    width: 18px; height: 18px;
+    display: grid;
+    place-items: center;
+    background: var(--paper);
+    border: 1px solid rgba(93,217,185,0.55);
+    border-radius: 50%;
+    color: #5dd9b9;
+    font-size: 9px;
+    line-height: 1;
+  }
+  .agent-bubble .meta {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .agent-bubble .meta em { color: var(--orange); font-style: normal; }
+  .agent-divider {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: clamp(4px, 0.6vw, 8px) 0;
+    position: relative;
+  }
+  .agent-divider::before, .agent-divider::after {
+    content: "";
+    display: inline-block;
+    width: 32px;
+    height: 1px;
+    background: var(--rule);
+    vertical-align: middle;
+    margin: 0 10px;
+  }
+
+  /* Slide 9 - Consumer flywheel (single wheel, separate from venue flywheels). */
+  .b2c-fw-slide { padding-bottom: 28px; }
+  .b2c-fw-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(220px, 0.85fr) 1.4fr;
+    column-gap: clamp(40px, 4vw, 80px);
+    align-items: center;
+    min-height: 0;
+  }
+  .b2c-fw-lede {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.4vw, 22px);
+    justify-content: center;
+  }
+  .b2c-fw-lede p {
+    font-family: var(--display);
+    font-size: clamp(18px, 1.5vw, 24px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 30ch;
+  }
+  .b2c-fw-lede p em { font-style: italic; color: var(--ink); }
+  .b2c-fw-lede p strong { color: var(--orange); font-style: italic; font-weight: 600; }
+  .b2c-fw-lede .pull {
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    line-height: 1.6;
+  }
+  .b2c-fw-lede .pull em { color: var(--orange); font-style: normal; }
+
+  .b2c-wheel-col { display: flex; flex-direction: column; gap: clamp(12px, 1.2vw, 18px); }
+  .b2c-fw-stage .fw-cards { max-width: 700px; }
+  .b2c-fw-outputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: clamp(24px, 2.5vw, 48px);
+    margin-top: clamp(10px, 1.5vw, 22px);
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+  .b2c-fw-outputs .label {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.85vw, 12px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .b2c-fw-outputs .line {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.05vw, 16px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    display: block;
+  }
+  .b2c-fw-outputs .line em { font-style: italic; color: var(--orange); font-weight: 500; }
+
+  /* ====================================================================
+     SLIDE 7 - 4-column layout when .with-squads is applied:
+     sources | flow curves | squad cards (middle) | Aanya profile (right).
+     Data flows: sources -> flow pulses -> squads -> Aanya. Squads sit in
+     the visual center; profile receives the combined signal on the right.
+     ==================================================================== */
+  .graph-stage.with-squads {
+    grid-template-columns:
+      minmax(190px, 0.7fr)
+      minmax(160px, 0.7fr)
+      minmax(220px, 0.9fr)
+      minmax(240px, 1.0fr);
+    column-gap: clamp(14px, 1.3vw, 26px);
+  }
+  .profile-pane.single {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .profile-pane.single::before { display: none; }
+  .profile-card.aanya-full {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Squad column (middle). All 3 cards are always visible. A backing SVG
+     draws 3 thin arcs from each card outward to the right edge of the
+     pane, signalling that squad-attributed events flow onward into
+     Aanya's profile (COL 4). */
+  .squad-pane {
+    position: relative;
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+    row-gap: clamp(8px, 0.9vw, 14px);
+    padding: 0;
+    z-index: 0;
+  }
+  .squad-pane .squad-flow {
+    position: absolute;
+    left: 0;
+    right: -8%;
+    top: 0;
+    bottom: 0;
+    width: 108%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .squad-pane .squad-flow .sq-line {
+    stroke: rgba(254, 140, 0, 0.30);
+    stroke-width: 0.5;
+    fill: none;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 0.8 1.4;
+  }
+
+  .squad-card {
+    position: relative;
+    z-index: 1;
+    padding: clamp(10px, 1.0vw, 16px) clamp(11px, 1.1vw, 16px);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper-2, #15151a);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.6vw, 8px);
+  }
+
+  .squad-card .sq-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .squad-card .sq-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .squad-card .sq-name {
+    font-family: var(--display);
+    font-size: clamp(14px, 1.2vw, 17px);
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .squad-card .sq-name em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-3);
+    font-size: clamp(12px, 1vw, 14px);
+  }
+  .squad-card .sq-members {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .squad-card .sq-dots {
+    display: inline-flex;
+    align-items: center;
+  }
+  .squad-card .sq-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: #0d0d0e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    border: 1.5px solid var(--paper-2, #15151a);
+    margin-left: -5px;
+  }
+  .squad-card .sq-dot:first-child { margin-left: 0; }
+  .squad-card .sq-dot.a-orange { background: var(--orange); }
+  .squad-card .sq-dot.a-blue   { background: #6fb6e8; }
+  .squad-card .sq-dot.a-green  { background: #5dd9b9; }
+  .squad-card .sq-dot.a-pink   { background: #e879c8; }
+  .squad-card .sq-dot.a-purple { background: #b794f4; }
+  .squad-card .sq-dot.a-teal   { background: #5dd9b9; }
+  .squad-card .sq-dot.a-sky    { background: #6fb6e8; }
+  .squad-card .sq-dot.a-amber  { background: #ffd166; }
+  .squad-card .sq-dot.a-lime   { background: #c2f54b; }
+  .squad-card .sq-count {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .squad-card .sq-body {
+    font-family: var(--display);
+    font-size: clamp(12px, 1vw, 14px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .squad-card .sq-body em { font-style: italic; color: var(--ink); }
+  .squad-card .sq-body strong { color: var(--orange); font-weight: 500; }
+  .squad-card .sq-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 6px;
+    border-top: 1px solid var(--rule);
+  }
+  .squad-card .sq-status em {
+    font-style: italic;
+    color: var(--orange);
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: var(--display);
+    font-size: 11px;
+  }
+
+  /* Live squad action feed - mirrors Aanya's activity feed pattern. Items
+     slide in from the right with a stagger so the card visibly "fills up"
+     during the 14s loop. */
+  .squad-card .sq-feed {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--display);
+    font-size: clamp(11px, 0.95vw, 13px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    overflow: hidden;
+  }
+  .squad-card .sq-feed li {
+    position: relative;
+    padding-left: 12px;
+    opacity: 0;
+    transform: translateX(24px);
+    animation-duration: 14s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+  .squad-card .sq-feed li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--orange);
+    opacity: 0.55;
+  }
+  .squad-card .sq-feed li em {
+    font-style: italic;
+    color: var(--ink);
+  }
+  .squad-card .sq-feed li strong {
+    color: var(--orange);
+    font-weight: 500;
+  }
+  /* Each squad's 4 feed items appear in narrative order around the pulse(s)
+     it sources to Aanya. Squad 1 sources e3 (lands @31%) and e5 (@53%) -
+     items cluster around those moments. Squad 2 sources e4 (@42%). Squad
+     3 sources e6 (@64%). Items stay visible after they appear so the feed
+     reads top-to-bottom by cycle end. */
+  .squad-card.sq1 .sq-feed li.sf-1 { animation-name: sq1-sf-1; }
+  .squad-card.sq1 .sq-feed li.sf-2 { animation-name: sq1-sf-2; }
+  .squad-card.sq1 .sq-feed li.sf-3 { animation-name: sq1-sf-3; }
+  .squad-card.sq1 .sq-feed li.sf-4 { animation-name: sq1-sf-4; }
+  .squad-card.sq2 .sq-feed li.sf-1 { animation-name: sq2-sf-1; }
+  .squad-card.sq2 .sq-feed li.sf-2 { animation-name: sq2-sf-2; }
+  .squad-card.sq2 .sq-feed li.sf-3 { animation-name: sq2-sf-3; }
+  .squad-card.sq2 .sq-feed li.sf-4 { animation-name: sq2-sf-4; }
+  .squad-card.sq3 .sq-feed li.sf-1 { animation-name: sq3-sf-1; }
+  .squad-card.sq3 .sq-feed li.sf-2 { animation-name: sq3-sf-2; }
+  .squad-card.sq3 .sq-feed li.sf-3 { animation-name: sq3-sf-3; }
+  .squad-card.sq3 .sq-feed li.sf-4 { animation-name: sq3-sf-4; }
+
+  /* Sat Crew - drinks chat (e3 departs 22%) and check-in (e5 departs 44%) */
+  @keyframes sq1-sf-1 { 0%, 18% { opacity: 0; transform: translateX(24px); } 22%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq1-sf-2 { 0%, 22% { opacity: 0; transform: translateX(24px); } 26%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq1-sf-3 { 0%, 36% { opacity: 0; transform: translateX(24px); } 40%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq1-sf-4 { 0%, 44% { opacity: 0; transform: translateX(24px); } 48%, 100% { opacity: 1; transform: translateX(0); } }
+
+  /* Office Crew - tier-up + Night Card share (e4 departs 33%) */
+  @keyframes sq2-sf-1 { 0%, 10% { opacity: 0; transform: translateX(24px); } 14%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq2-sf-2 { 0%, 28% { opacity: 0; transform: translateX(24px); } 32%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq2-sf-3 { 0%, 33% { opacity: 0; transform: translateX(24px); } 37%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq2-sf-4 { 0%, 48% { opacity: 0; transform: translateX(24px); } 52%, 100% { opacity: 1; transform: translateX(0); } }
+
+  /* Brunch Club - cross-venue at Lazy Brunch (e6 departs 55%) */
+  @keyframes sq3-sf-1 { 0%, 12% { opacity: 0; transform: translateX(24px); } 16%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq3-sf-2 { 0%, 36% { opacity: 0; transform: translateX(24px); } 40%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq3-sf-3 { 0%, 55% { opacity: 0; transform: translateX(24px); } 59%, 100% { opacity: 1; transform: translateX(0); } }
+  @keyframes sq3-sf-4 { 0%, 70% { opacity: 0; transform: translateX(24px); } 74%, 100% { opacity: 1; transform: translateX(0); } }
+
+  /* Extra Aanya badges introduced with the consolidated profile card. */
+  .badge.b-night    { border-color: rgba(255, 209, 102, 0.40); }
+  .badge.b-night    .b-ico { color: #ffd166; }
+  .badge.b-host     { border-color: rgba(232, 121, 200, 0.40); }
+  .badge.b-host     .b-ico { color: #e879c8; }
+
+  /* ====================================================================
+     SLIDE 7 - The Crowd: 3 persona cards + shared badges row styling.
+     The .profile-pane.multi modifier swaps the single-card layout for a
+     3-card vertical stack. Each .persona-card shows a different customer
+     journey (Loyalist / Discoverer / Squad Captain).
+     ==================================================================== */
+  .profile-pane.multi {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 0.9vw, 14px);
+    justify-content: center;
+    padding: 0;
+  }
+  .profile-pane.multi::before { display: none; }
+
+  .persona-card {
+    position: relative;
+    padding: clamp(12px, 1.2vw, 18px) clamp(14px, 1.4vw, 20px);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper-2, #15151a);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(7px, 0.8vw, 11px);
+  }
+  .persona-card .pcm-tag {
+    position: absolute;
+    top: -7px;
+    left: 14px;
+    padding: 0 8px;
+    background: var(--paper);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .persona-card .pcm-head {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1vw, 14px);
+  }
+  .persona-card .pcm-avatar {
+    width: clamp(32px, 2.6vw, 38px);
+    height: clamp(32px, 2.6vw, 38px);
+    border-radius: 50%;
+    background: var(--orange);
+    color: #0d0d0e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(15px, 1.3vw, 18px);
+    flex-shrink: 0;
+  }
+  .persona-card .pcm-avatar.a-blue   { background: #6fb6e8; }
+  .persona-card .pcm-avatar.a-purple { background: #b794f4; }
+  .persona-card .pcm-id { flex: 1; min-width: 0; }
+  .persona-card .pcm-name {
+    font-family: var(--display);
+    font-size: clamp(15px, 1.3vw, 19px);
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .persona-card .pcm-name .pcm-type {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-3);
+    font-size: clamp(13px, 1.1vw, 16px);
+  }
+  .persona-card .pcm-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    margin-top: 3px;
+  }
+  .persona-card .pcm-meta em {
+    font-style: italic;
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: clamp(12px, 1vw, 14px);
+    font-weight: 500;
+  }
+  .persona-card .pcm-tier {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    border: 1px solid rgba(254, 140, 0, 0.45);
+    padding: 4px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+  .persona-card .pcm-tier.t-blue {
+    color: #6fb6e8;
+    border-color: rgba(111, 182, 232, 0.55);
+  }
+  .persona-card .pcm-tier.t-purple {
+    color: #b794f4;
+    border-color: rgba(183, 148, 244, 0.55);
+  }
+  .persona-card .pcm-feed {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid var(--rule);
+    padding-top: clamp(6px, 0.7vw, 10px);
+  }
+  .persona-card .pcm-feed li {
+    font-family: var(--display);
+    font-size: clamp(12px, 1vw, 14px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .persona-card .pcm-feed em {
+    font-style: italic;
+    color: var(--ink);
+  }
+  .persona-card .pcm-feed .when {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--orange);
+    min-width: 62px;
+    margin-right: 8px;
+  }
+
+  /* Persona cards animate in synced to pulses (14s loop, same as slide 3):
+     - Aanya (p1)  fades in at ~10% when e1 lands     (Thu install)
+     - Rohan (p2)  fades in at ~32% when e3 lands     (Sat squad invite from Aanya)
+     - Tara  (p3)  fades in at ~45% when e4 lands     (Sat Wrapped share from Aanya)
+     Each card's two events use the existing feed-eN keyframes so they pop in
+     as their corresponding pulse arrives. The cascade tells the install story:
+     one downloader pulls two others through squad invite + share. */
+  .persona-card {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+    animation-duration: 14s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+  .persona-card.p1 { animation-name: persona-pop-1; }
+  .persona-card.p2 { animation-name: persona-pop-2; }
+  .persona-card.p3 { animation-name: persona-pop-3; }
+
+  @keyframes persona-pop-1 {
+    0%, 7%   { opacity: 0; transform: translateY(-8px) scale(0.985); }
+    10%      { opacity: 1; transform: translateY(0)    scale(1); }
+    97%      { opacity: 1; transform: translateY(0)    scale(1); }
+    100%     { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  }
+  @keyframes persona-pop-2 {
+    0%, 29%  { opacity: 0; transform: translateY(-8px) scale(0.985); }
+    32%      { opacity: 1; transform: translateY(0)    scale(1); }
+    97%      { opacity: 1; transform: translateY(0)    scale(1); }
+    100%     { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  }
+  @keyframes persona-pop-3 {
+    0%, 42%  { opacity: 0; transform: translateY(-8px) scale(0.985); }
+    45%      { opacity: 1; transform: translateY(0)    scale(1); }
+    97%      { opacity: 1; transform: translateY(0)    scale(1); }
+    100%     { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  }
+
+  /* Each event row pops in when its pulse lands on the curve. */
+  .persona-card .pcm-feed li {
+    opacity: 0;
+    transform: translateY(-4px);
+    animation-duration: 14s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+  .persona-card.p1 .pcm-feed li:nth-child(1) { animation-name: feed-e1; }
+  .persona-card.p1 .pcm-feed li:nth-child(2) { animation-name: feed-e4; }
+  .persona-card.p2 .pcm-feed li:nth-child(1) { animation-name: feed-e3; }
+  .persona-card.p2 .pcm-feed li:nth-child(2) { animation-name: feed-e6; }
+  .persona-card.p3 .pcm-feed li:nth-child(1) { animation-name: feed-e5; }
+  .persona-card.p3 .pcm-feed li:nth-child(2) { animation-name: feed-e7; }
+  .persona-card .pcm-feed li.now {
+    background: transparent;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin: -1px -5px;
+    animation: feed-e7 14s ease-out infinite, now-flash 14s ease-out infinite;
+  }
+
+  /* Squad cascade connectors between cards - show how the install loop
+     interlinks the personas. Each connector appears just before the card
+     it leads into, synced with the same pulse timing. */
+  .profile-pane.multi .squad-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0;
+    margin: clamp(-10px, -0.8vw, -6px) 0;
+    opacity: 0;
+    animation-duration: 14s;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+    animation-fill-mode: both;
+  }
+  .profile-pane.multi .squad-link.sl1 { animation-name: link-pop-1; }
+  .profile-pane.multi .squad-link.sl2 { animation-name: link-pop-2; }
+  .profile-pane.multi .squad-link::before,
+  .profile-pane.multi .squad-link::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(254, 140, 0, 0.45) 50%, transparent 100%);
+    margin: 0 10px;
+  }
+  .profile-pane.multi .squad-link .sl-arrow {
+    color: var(--orange);
+    font-family: var(--display);
+    font-size: 13px;
+    margin-right: 4px;
+    display: inline-block;
+    transform: translateY(1px);
+  }
+  .profile-pane.multi .squad-link em {
+    font-style: italic;
+    font-family: var(--display);
+    font-size: 12px;
+    color: var(--orange);
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 0 4px;
+  }
+  @keyframes link-pop-1 {
+    0%, 28%  { opacity: 0; }
+    31%      { opacity: 1; }
+    97%      { opacity: 1; }
+    100%     { opacity: 0; }
+  }
+  @keyframes link-pop-2 {
+    0%, 41%  { opacity: 0; }
+    44%      { opacity: 1; }
+    97%      { opacity: 1; }
+    100%     { opacity: 0; }
+  }
+
+  /* ====================================================================
+     SLIDE 7 - Consumer dossier extras: earned badges + cross-venue arc.
+     ==================================================================== */
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 6px;
+    margin-top: 2px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px 4px 6px;
+    border: 1px solid rgba(254, 140, 0, 0.30);
+    border-radius: 11px;
+    background: rgba(254, 140, 0, 0.05);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .badge .b-ico {
+    font-size: 11px;
+    line-height: 1;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  /* Each badge gets a colour cue tied to a slide-3-aligned pulse family. */
+  .badge.b-backfill { border-color: rgba(232, 121, 200, 0.40); }
+  .badge.b-backfill .b-ico { color: #e879c8; }
+  .badge.b-squad    { border-color: rgba(93, 217, 185, 0.40); }
+  .badge.b-squad    .b-ico { color: #5dd9b9; }
+  .badge.b-streak   { border-color: rgba(254, 140, 0, 0.45); }
+  .badge.b-streak   .b-ico { color: var(--orange); }
+  .badge.b-wrap     { border-color: rgba(183, 148, 244, 0.40); }
+  .badge.b-wrap     .b-ico { color: #b794f4; }
+  .badge.b-first    { border-color: rgba(194, 245, 75, 0.40); }
+  .badge.b-first    .b-ico { color: #c2f54b; }
+  .badge.b-cross    { border-color: rgba(111, 182, 232, 0.40); }
+  .badge.b-cross    .b-ico { color: #6fb6e8; }
+
+  .venue-arc { margin-top: 4px; }
+  .venue-arc svg {
+    width: 100%;
+    height: 26px;
+    display: block;
+    overflow: visible;
+  }
+  .venue-arc .va-track {
+    stroke: rgba(254, 140, 0, 0.25);
+    stroke-width: 0.5;
+    fill: none;
+    stroke-dasharray: 0.8 1.4;
+    vector-effect: non-scaling-stroke;
+  }
+  .venue-arc .va-dot {
+    fill: var(--orange);
+    stroke: rgba(13, 13, 14, 0.6);
+    stroke-width: 0.3;
+    vector-effect: non-scaling-stroke;
+  }
+  .venue-arc .va-d1 { fill-opacity: 1.00; }
+  .venue-arc .va-d2 { fill-opacity: 0.85; }
+  .venue-arc .va-d3 { fill-opacity: 0.70; }
+  .venue-arc .va-d4 { fill-opacity: 0.55; }
+  .venue-arc .va-d5 { fill-opacity: 0.42; }
+  .venue-arc .va-d6 { fill-opacity: 0.32; }
+  .venue-arc .va-labels {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+    text-align: center;
+  }
+  .venue-arc .va-labels span {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    line-height: 1.15;
+  }
+  .venue-arc .va-labels span em {
+    display: block;
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-top: 2px;
+  }
+  .venue-arc .va-foot {
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .venue-arc .va-foot strong { color: var(--orange); font-weight: 600; }
+  .venue-arc .va-foot em { color: var(--ink-2); font-style: normal; }
+
+  /* ====================================================================
+     SLIDE 8 - The Compounding Loop (multiplier ladder).
+     Editorial lede on the left, a row-per-week chain on the right.
+     Each row: week label · mechanism (italic) · operator · count.
+     Count font-size scales row-by-row so the compounding is visual.
+     ==================================================================== */
+  .compound-slide { padding-bottom: 28px; }
+  .compound-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(240px, 0.85fr) 1.5fr;
+    column-gap: clamp(40px, 4vw, 80px);
+    align-items: center;
+    min-height: 0;
+  }
+  .compound-lede {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.2vw, 20px);
+    justify-content: center;
+  }
+  .compound-lede p {
+    font-family: var(--display);
+    font-size: clamp(17px, 1.4vw, 22px);
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 30ch;
+    margin: 0;
+  }
+  .compound-lede p em { font-style: italic; color: var(--ink); }
+  .compound-lede p strong { color: var(--orange); font-style: italic; font-weight: 600; }
+  .compound-lede p.rule {
+    border-top: 1px solid var(--rule);
+    padding-top: clamp(10px, 1vw, 16px);
+  }
+  .compound-lede .pull {
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    line-height: 1.6;
+  }
+  .compound-lede .pull em { color: var(--orange); font-style: normal; }
+
+  .chain {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    column-gap: clamp(14px, 1.5vw, 26px);
+    row-gap: clamp(4px, 0.5vw, 8px);
+    align-items: baseline;
+    padding: clamp(8px, 1vw, 14px) clamp(10px, 1.2vw, 18px);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background:
+      linear-gradient(180deg, transparent 0%, rgba(254, 140, 0, 0.04) 100%),
+      var(--paper);
+  }
+  .chain-row {
+    display: contents;
+  }
+  .chain-row > * { padding: clamp(2px, 0.4vw, 6px) 0; }
+  .chain-week {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.85vw, 12px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    align-self: center;
+  }
+  .chain-mech {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.1vw, 17px);
+    color: var(--ink-2);
+    line-height: 1.35;
+    align-self: center;
+  }
+  .chain-mech em { font-style: italic; color: var(--ink); }
+  .chain-op {
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.95vw, 13px);
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    align-self: center;
+    text-align: right;
+    min-width: 2.2em;
+  }
+  .chain-count {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: right;
+    min-width: 4.2ch;
+    align-self: baseline;
+    font-feature-settings: "tnum";
+    transition: color 320ms ease;
+  }
+  /* Count grows step by step so the compounding is visible at a glance. */
+  .chain-count.s0 { font-size: clamp(13px, 1.0vw, 15px); color: var(--ink-3); }
+  .chain-count.s1 { font-size: clamp(14px, 1.1vw, 16px); color: var(--ink-2); }
+  .chain-count.s2 { font-size: clamp(15px, 1.2vw, 18px); color: var(--ink-2); }
+  .chain-count.s3 { font-size: clamp(17px, 1.4vw, 21px); color: var(--ink); }
+  .chain-count.s4 { font-size: clamp(19px, 1.6vw, 24px); color: var(--ink); }
+  .chain-count.s5 { font-size: clamp(21px, 1.9vw, 28px); color: var(--ink); }
+  .chain-count.s6 { font-size: clamp(24px, 2.2vw, 32px); color: var(--ink); }
+  .chain-count.s7 {
+    font-size: clamp(28px, 2.6vw, 38px);
+    color: #ffb86b;
+  }
+  .chain-count.s8 {
+    font-size: clamp(36px, 3.4vw, 52px);
+    color: var(--orange);
+    font-weight: 600;
+  }
+  .chain-row.punch .chain-mech em { color: var(--orange); }
+  .chain-row.punch {
+    --punch-top: 1px solid rgba(254, 140, 0, 0.35);
+  }
+  .chain-row.punch > * { border-top: var(--punch-top); padding-top: clamp(6px, 0.7vw, 10px); margin-top: clamp(4px, 0.5vw, 8px); }
+
+  .compound-pitch {
+    margin-top: clamp(14px, 1.6vw, 24px);
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: clamp(8px, 1vw, 14px);
+    font-family: var(--display);
+    font-size: clamp(15px, 1.2vw, 20px);
+    color: var(--ink-2);
+  }
+  .compound-pitch .pq-from {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.85vw, 12px);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .compound-pitch .pq-old { color: var(--ink-3); }
+  .compound-pitch .pq-old em { font-style: italic; }
+  .compound-pitch .pq-arrow { color: var(--ink-3); font-family: var(--mono); }
+  .compound-pitch .pq-new strong { color: var(--orange); font-style: italic; font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .slide { padding: 32px 40px 60px; }
+    .split { grid-template-columns: 1fr; gap: 32px; }
+    .split-visual { display: none; }
+    .surface-head { flex-direction: column; align-items: flex-start; gap: 18px; }
+    .surface-head .surface-title { max-width: 100%; }
+    .surface-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mini-phone { height: min(38vh, 360px); }
+    .flywheel-stage { grid-template-columns: 1fr; row-gap: 24px; }
+    .fw-stage { grid-template-columns: 1fr; row-gap: 36px; }
+    .fw-wheel {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas: "hub hub" "top right" "left bot";
+      column-gap: 12px;
+      row-gap: 12px;
+    }
+    .fw-card { max-width: none; }
+    .fw-arcs { display: none; }
+    .fw-wheel-head { max-width: 100%; padding-bottom: 6px; }
+    .fw-wheel-head h2 { font-size: clamp(20px, 5vw, 26px); }
+    .graph-node-col::before, .graph-node-col::after { display: none; }
+    .brief-stage { grid-template-columns: 1fr; }
+    .brief-caps { grid-template-columns: 1fr; }
+    .consumer-stage { grid-template-columns: 1fr; }
+    .b2c-fw-stage { grid-template-columns: 1fr; }
+    .dossier .dos-grid { grid-template-columns: 1fr; }
+    .b2c-fw-outputs { grid-template-columns: 1fr; row-gap: 14px; }
+    .compound-stage { grid-template-columns: 1fr; row-gap: 24px; }
+  }
+  /* ====================================================================
+     PART THREE · THE BUSINESS — fundraising slides (Market / Traction /
+     Model / Field / Ask). All components reuse the deck tokens.
+     ==================================================================== */
+
+  /* Shared big-stat row (Traction) */
+  .biz-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(14px, 1.6vw, 26px);
+    margin-bottom: clamp(14px, 1.8vw, 26px);
+  }
+  /* Traction slide: let the stat row absorb spare height so the strip and
+     outputs sit lower and the slide fills the viewport. */
+  .traction-slide .biz-stats { flex: 1; align-content: center; }
+  .traction-slide .fw-outputs { margin-top: 0; padding-bottom: clamp(8px, 1.2vw, 18px); }
+  .biz-stat {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-2);
+    padding: clamp(16px, 1.6vw, 26px) clamp(16px, 1.5vw, 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .biz-stat .bs-k {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.8vw, 12px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .biz-stat .bs-v {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(34px, 3.2vw, 54px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .biz-stat .bs-v em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .biz-stat .bs-sub {
+    font-family: var(--display);
+    font-size: clamp(12px, 1vw, 15px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+
+  /* Venue marquee strip (Traction) */
+  .venue-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin: clamp(8px, 1vw, 14px) 0 clamp(10px, 1.4vw, 20px);
+  }
+  .venue-strip .vs-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-right: 6px;
+  }
+  .venue-strip span:not(.vs-label) {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.82vw, 12px);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+
+  /* Market slide — nested TAM/SAM/SOM boxes + why-now rail */
+  .market-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.5fr 0.65fr;
+    gap: clamp(28px, 3vw, 56px);
+    min-height: 0;
+    align-items: stretch;
+  }
+  /* Concentric TAM/SAM/SOM — nested circles anchored bottom-center, with
+     orange leader lines + dots running to the label rows on the right. */
+  .tsm-wrap {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(20px, 2.2vw, 40px);
+    min-height: 0;
+    min-width: 0;
+  }
+  .tsm-canvas {
+    position: relative;
+    height: min(100%, clamp(280px, 26vw, 430px));
+    aspect-ratio: 1;
+    align-self: center;
+  }
+  .tsm-circle {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+  .tsm-circle.tam {
+    height: 100%;
+    background: rgba(254, 140, 0, 0.045);
+    border: 1px solid var(--rule);
+  }
+  .tsm-circle.sam {
+    height: 64%;
+    background: rgba(254, 140, 0, 0.09);
+    border: 1px solid rgba(254, 140, 0, 0.35);
+  }
+  .tsm-circle.som {
+    height: 35%;
+    background: rgba(254, 140, 0, 0.2);
+    border: 1px solid var(--orange);
+    box-shadow: 0 0 30px rgba(254, 140, 0, 0.16);
+  }
+  .tsm-circle .tc-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.95vw, 14px);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .tsm-circle.tam .tc-label { top: 6.5%; color: var(--ink-2); }
+  .tsm-circle.sam .tc-label { top: 9%; color: var(--ink-2); }
+  .tsm-circle.som .tc-label {
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--ink);
+  }
+  .tsm-rows {
+    position: relative;
+    min-width: 0;
+    align-self: center;
+    height: min(100%, clamp(280px, 26vw, 430px));
+  }
+  .tsm-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .tsm-row.r-tam { top: 0; }
+  .tsm-row.r-sam { top: 37%; }
+  .tsm-row.r-som { top: 68%; }
+  /* leader line + dot reaching back to the circles' vertical axis */
+  .tsm-row::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: 13px;
+    width: calc(clamp(140px, 13vw, 215px) + clamp(20px, 2.2vw, 40px) - 14px);
+    height: 1px;
+    margin-right: 8px;
+    background: linear-gradient(270deg, rgba(254,140,0,0.7), rgba(254,140,0,0.15));
+  }
+  .tsm-row::after {
+    content: "";
+    position: absolute;
+    right: calc(100% + clamp(140px, 13vw, 215px) + clamp(20px, 2.2vw, 40px) - 6px);
+    top: 10px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 12px rgba(254, 140, 0, 0.6);
+  }
+  .tsm-row .tr-tag {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.8vw, 12px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .tsm-row .tr-num {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(26px, 2.4vw, 42px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .tsm-row .tr-num em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .tsm-row .tr-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: clamp(14px, 1.15vw, 18px);
+    color: var(--ink-2);
+  }
+  .tsm-row .tr-basis {
+    font-family: var(--mono);
+    font-size: clamp(9px, 0.74vw, 11px);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin-top: 2px;
+  }
+  .tsm-row .tr-basis em { color: var(--orange); font-style: normal; }
+
+  .whynow-rail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(10px, 1.1vw, 16px);
+    min-width: 0;
+  }
+  .whynow-rail .wn-head {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .wn-card {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-2);
+    padding: clamp(10px, 1vw, 16px) clamp(12px, 1.2vw, 18px);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .wn-card .wn-stat {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(17px, 1.5vw, 24px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .wn-card .wn-stat em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .wn-card .wn-line {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.78vw, 12px);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .wn-card .wn-line em { color: var(--orange); font-style: normal; }
+  .market-slide .src-note {
+    font-family: var(--mono);
+    font-size: clamp(8px, 0.62vw, 9.5px);
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    color: var(--ink-3);
+    margin-top: clamp(8px, 0.9vw, 14px);
+    border-top: 1px solid var(--rule);
+    padding-top: clamp(6px, 0.6vw, 10px);
+  }
+
+  /* Competition slide — 2×2 positioning map */
+  .field-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    gap: clamp(24px, 2.6vw, 48px);
+    min-height: 0;
+    align-items: stretch;
+  }
+  .quad-wrap {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    min-height: 0;
+  }
+  .quad-axis {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: center;
+  }
+  .quad-axis.top { grid-column: 2; grid-row: 1; }
+  .quad-axis.bottom { grid-column: 2; grid-row: 3; }
+  .quad-axis.left {
+    grid-column: 1; grid-row: 2;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    align-self: center;
+  }
+  .quad-grid {
+    grid-column: 2; grid-row: 2;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .quad-cell {
+    background: var(--paper-2);
+    padding: clamp(12px, 1.3vw, 22px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+  }
+  .quad-cell.hot { background: oklch(0.19 0.02 60); }
+  .quad-cell .qc-who {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(14px, 1.15vw, 19px);
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .quad-cell .qc-note {
+    font-family: var(--mono);
+    font-size: clamp(9px, 0.74vw, 11px);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .quad-cell .qc-note em { color: var(--orange); font-style: normal; }
+  .quad-cell .qc-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .quad-bash {
+    position: absolute;
+    top: 26%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--paper);
+    border: 1px solid var(--orange);
+    border-radius: 4px;
+    padding: 12px 22px;
+    box-shadow: 0 0 34px rgba(254, 140, 0, 0.28), 0 18px 50px -12px rgba(0,0,0,0.8);
+  }
+  .quad-bash img { height: 20px; width: auto; display: block; }
+  .quad-bash .qb-line {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .field-beats {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(12px, 1.4vw, 20px);
+    min-width: 0;
+  }
+  .field-beat { display: flex; flex-direction: column; gap: 4px; }
+  .field-beat .fb-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--orange);
+  }
+  .field-beat .fb-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(16px, 1.35vw, 22px);
+    line-height: 1.15;
+    color: var(--ink);
+  }
+  .field-beat .fb-line {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.05vw, 16px);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .field-beat .fb-line em { font-style: italic; color: var(--orange); font-weight: 500; }
+
+  /* Business model slide — 3 revenue eras */
+  .model-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(16px, 1.8vw, 30px);
+    min-height: 0;
+    align-content: center;
+  }
+  .era {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-2);
+    padding: clamp(16px, 1.7vw, 28px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: clamp(340px, 52vh, 480px);
+  }
+  .era.now { border-color: var(--orange); box-shadow: 0 0 24px rgba(254, 140, 0, 0.1); }
+  .era .era-tag {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.8vw, 12px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+  .era .era-name {
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(22px, 2vw, 34px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .era .era-sub {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.05vw, 16px);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .era .era-sub em { font-style: italic; color: var(--ink); }
+  .era ul {
+    list-style: none;
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .era ul li {
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.8vw, 12px);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--ink-2);
+    padding-left: 12px;
+    position: relative;
+  }
+  .era ul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.7em;
+    width: 6px; height: 1px;
+    background: var(--orange);
+    opacity: 0.7;
+  }
+  .era ul li em { color: var(--orange); font-style: normal; }
+  .era .era-math {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: clamp(10px, 0.8vw, 12px);
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .era .era-math em { color: var(--orange); font-style: normal; }
+
+  /* Ask slide */
+  .ask-stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(32px, 3.4vw, 64px);
+    min-height: 0;
+    align-items: center;
+  }
+  .ask-left { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: clamp(16px, 2vh, 28px); }
+  .ask-amount {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(44px, 4.6vw, 78px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .ask-amount em { font-style: italic; color: var(--orange); font-weight: 500; }
+  .ask-stage-line {
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.9vw, 13px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .uof { display: flex; flex-direction: column; gap: 12px; }
+  .uof-head {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .uof-row { display: flex; flex-direction: column; gap: 5px; }
+  .uof-row .ur-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .uof-row .ur-name {
+    font-family: var(--display);
+    font-size: clamp(13px, 1vw, 15px);
+    color: var(--ink);
+  }
+  .uof-row .ur-name em { font-style: italic; color: var(--ink-2); }
+  .uof-row .ur-pct {
+    font-family: var(--mono);
+    font-size: clamp(11px, 0.9vw, 13px);
+    color: var(--orange);
+  }
+  .uof-row .ur-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--rule);
+    overflow: hidden;
+  }
+  .uof-row .ur-bar i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(254,140,0,0.45), var(--orange));
+    border-radius: 2px;
+  }
+  .ask-right { display: flex; flex-direction: column; justify-content: center; gap: clamp(13px, 1.6vh, 20px); }
+  .ask-right .ar-head {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .milestone {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-2);
+    padding: clamp(10px, 1vw, 14px) clamp(13px, 1.3vw, 20px);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .milestone .ms-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  .milestone .ms-body {
+    font-family: var(--display);
+    font-size: clamp(13px, 1.02vw, 15.5px);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .milestone .ms-body em { font-style: italic; color: var(--ink); }
+  .milestone .ms-body strong { color: var(--orange); font-weight: 600; }
+
+  /* ====================================================================
+     MOBILE — FULL PORTRAIT REFLOW (phones / small touch screens).
+     Everything below is mobile-only; desktop rendering is untouched.
+     This block sits after all desktop + the 1100px query, so it wins.
+     ==================================================================== */
+  @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
+    /* 1 — never show the "open on desktop" gate; let the deck render */
+    .mobile-gate { display: none !important; }
+
+    /* 2 — each active slide scrolls vertically, no horizontal overflow,
+           content starts at the top and clears the fixed bottom nav */
+    html, body { overflow: hidden; }
+    .deck { height: 100vh; height: 100dvh; }
+    .slide {
+      padding: 18px 16px 92px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      justify-content: flex-start !important;
+    }
+    /* title / act-break slides stay centred but get sane padding */
+    .title-slide { padding: 48px 20px 92px !important; justify-content: center !important; }
+
+    /* Masthead: allow wrap / shrink so it never overflows the viewport */
+    .masthead {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+    }
+    .masthead .brand { height: 18px; }
+
+    /* Title slide visuals constrained to the viewport */
+    .title-slide .brand-big { width: min(70vw, 300px); margin-bottom: 28px; }
+    .title-slide .tagline { font-size: clamp(20px, 6vw, 28px); max-width: 22ch; }
+    .title-slide .meta { margin-top: 36px; }
+
+    /* Headlines: keep legible but never overflow a 380px screen */
+    .headline { font-size: clamp(34px, 11vw, 56px); margin-bottom: 22px; }
+    .dek { font-size: clamp(16px, 4.6vw, 20px); }
+    .surface-headline { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .surface-headline h1 { font-size: clamp(22px, 6.5vw, 30px); }
+
+    /* ---- Stack EVERY remaining multi-column grid to one column ----
+       (grids already stacked by the 1100px query are not repeated here) */
+    .tools-grid { grid-template-columns: 1fr; }
+    .surface-row { grid-template-columns: 1fr; }
+    .graph-stage { grid-template-columns: 1fr; row-gap: 22px; }
+    .graph-stage.with-squads { grid-template-columns: 1fr; row-gap: 22px; }
+    .pc-stats { grid-template-columns: 1fr; }
+    .fw-outputs { grid-template-columns: 1fr; }
+    .market-stage { grid-template-columns: 1fr; row-gap: 28px; }
+    .tsm-wrap { grid-template-columns: 1fr; row-gap: 18px; }
+    .field-stage { grid-template-columns: 1fr; row-gap: 24px; }
+    .model-stage { grid-template-columns: 1fr; row-gap: 18px; }
+    .era { min-height: 0; }
+    .va-labels { grid-template-columns: 1fr 1fr; }
+    .chain { grid-template-columns: 1fr; row-gap: 8px; }
+
+    /* Compact stat rows → 2-up so they stay scannable */
+    .biz-stats { grid-template-columns: 1fr 1fr; }
+    .biz-stat .bs-v { font-size: clamp(28px, 9vw, 40px); }
+
+    /* Small fixed two-col rows kept but allowed to shrink gracefully */
+    .agent-row { grid-template-columns: 56px 1fr; }
+
+    /* ---- Phone mockups: full column width, capped height, centred ---- */
+    .mini-phone,
+    .demo-phone,
+    .phone {
+      width: min(78vw, 320px) !important;
+      max-width: 100%;
+      height: auto !important;
+      max-height: 70vh;
+      aspect-ratio: 9 / 19;
+      margin: 0 auto;
+    }
+    .mini { align-items: center; }
+    .split-visual { display: flex !important; height: auto; }
+
+    /* ---- Bottom nav: touch-friendly; hide keyboard hint ---- */
+    .nav { bottom: 14px; right: 14px; gap: 12px; }
+    .nav button { width: 42px; height: 42px; }
+    .nav .counter { min-width: 44px; }
+    .hint { display: none !important; }
+
+    /* ---- iframe → tap-to-open card (iframes hidden by mobile JS) ---- */
+    .m-open {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 160px;
+      height: 100%;
+      padding: 22px 18px;
+      border: 1px dashed var(--rule);
+      border-radius: inherit;
+      background: var(--paper-2);
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--sans);
+    }
+    .m-open .mo-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+    }
+    .m-open .mo-cta {
+      font-family: var(--display);
+      font-size: 16px;
+      color: var(--orange);
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <!-- Mobile gate: shown only on phones / small touch screens (see CSS) -->
+  <div class="mobile-gate" role="alert">
+    <img class="mg-logo" src="bash-logo.svg" alt="Bash" />
+    <h1 class="mg-title">Best viewed on <span class="em">desktop</span></h1>
+    <p class="mg-sub">This pitch deck is built for a large screen. Please open it on a laptop or desktop to view the deck.</p>
+    <div class="mg-meta">Investor Pitch · 2026</div>
+  </div>
+
+  <section class="slide title-slide active">
+    <img class="brand-big" src="bash-logo.svg" alt="Bash" />
+    <p class="tagline">The customer engagement platform for <span class="em">venues that earn their crowd</span>.</p>
+    <div class="meta">Investor Pitch · 2026</div>
+  </section>
+
+  <!-- SLIDE 2: HOLISTIC SURFACE - 2x2 LIVE SCREENS -->
+  <section class="slide surface-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>I · The Toolkit · One Surface</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">One Surface</span>
+      <h1>Four tools. <em>One surface</em>. <span style="color: var(--ink-3);">One customer graph.</span></h1>
+    </div>
+    <div class="surface-row">
+      <div class="mini">
+        <div class="phone mini-phone">
+          <div class="screen"><iframe src="https://webapp.bash-india.com/club/29" title="Menu" allow="autoplay"></iframe></div>
+        </div>
+        <div class="mini-info">
+          <div class="num">01</div>
+          <div class="name">Digital Menu</div>
+          <div class="desc">QR-first menu. Every scan a customer signal.</div>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="phone mini-phone">
+          <div class="screen"><iframe src="screens/bouncer/app.html?embed=1" title="Register"></iframe></div>
+        </div>
+        <div class="mini-info">
+          <div class="num">02</div>
+          <div class="name">Guest Register</div>
+          <div class="desc">Reservations, walk-ins, guest list. One ledger.</div>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="phone mini-phone">
+          <div class="screen"><iframe src="https://webapp.bash-india.com/club/10/events" title="Tickets" allow="autoplay"></iframe></div>
+        </div>
+        <div class="mini-info">
+          <div class="num">03</div>
+          <div class="name">Event Ticketing</div>
+          <div class="desc">Sell, scan, settle - wired to the same guest.</div>
+        </div>
+      </div>
+      <div class="mini">
+        <div class="phone mini-phone">
+          <div class="screen"><iframe src="screens/valet.html" title="Valet"></iframe></div>
+        </div>
+        <div class="mini-info">
+          <div class="num">04</div>
+          <div class="name">Digital Valet</div>
+          <div class="desc">Park to pickup, one tap. No paper slips.</div>
+        </div>
+      </div>
+    </div>
+    <div class="focus-backdrop" id="surfaceBackdrop"></div>
+    <button class="focus-dismiss" id="focusDismiss" type="button">← Back</button>
+    <div class="focus-hint">
+      <span class="grp"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> focus</span>
+      <span class="grp"><kbd>← →</kbd> switch</span>
+      <span class="grp"><kbd>ESC</kbd> back</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: CUSTOMER GRAPH - DATA WE COLLECT -->
+  <section class="slide graph-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>II · The Customer Graph · What the venue learns</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Customer Graph</span>
+      <h1>Every scan, entry and pickup <em>becomes one customer</em> - for the venue.</h1>
+    </div>
+
+    <div class="graph-stage">
+      <div class="graph-sources">
+        <div class="source">
+          <div class="src-head"><span class="src-num">01</span><span class="src-name">Digital Menu</span></div>
+          <ul>
+            <li>Scanned menu at the table</li>
+            <li>Viewed Espresso Martini ×3</li>
+            <li>Tapped 4 items · stayed 2m 14s</li>
+            <li>Cocktail-led preference</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">02</span><span class="src-name">Guest Register</span></div>
+          <ul>
+            <li>Name &amp; phone captured</li>
+            <li>Party of 4 · 2 women, 2 men</li>
+            <li>Walk-in · seated VIP Table 7</li>
+            <li>Bouncer Ravi · 9:52 pm</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">03</span><span class="src-name">Tickets · Bookings · Bill</span></div>
+          <ul>
+            <li>F&amp;B order · ₹3,200 via UPI</li>
+            <li>Bought 2 event tickets · next Sun</li>
+            <li>Table bookings &amp; ticket scans</li>
+            <li>Co-payer linked to profile</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">04</span><span class="src-name">Digital Valet</span></div>
+          <ul>
+            <li>Phone on arrival · Verna KA-01</li>
+            <li>Handed over at 9:48 pm</li>
+            <li>Called car at 1:22 am</li>
+            <li>Returned in 3m 12s</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="graph-flow">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="flowGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#fe8c00" stop-opacity="0.15"/>
+              <stop offset="55%"  stop-color="#fe8c00" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#fe8c00" stop-opacity="0.95"/>
+            </linearGradient>
+          </defs>
+          <path class="flow-path"        d="M 0 12 C 38 12, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 38 C 42 38, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 62 C 42 62, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 88 C 38 88, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 12 C 38 12, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 38 C 42 38, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 62 C 42 62, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 88 C 38 88, 62 50, 100 50" />
+          <!-- Seven pulses in narrative order. Bill curve carries 2 (order, ticket-buy); Valet carries 3 (entry, call, collect) - all staggered so only one is on each line at a time. -->
+          <!-- e1: Valet - Car entered                                       -->
+          <path class="flow-pulse e1"    d="M 0 88 C 38 88, 62 50, 100 50" pathLength="100" />
+          <!-- e2: Register - Walk-in party of 4 at VIP Table 7              -->
+          <path class="flow-pulse e2"    d="M 0 38 C 42 38, 62 50, 100 50" pathLength="100" />
+          <!-- e3: Menu - Viewed cocktails                                    -->
+          <path class="flow-pulse e3"    d="M 0 12 C 38 12, 62 50, 100 50" pathLength="100" />
+          <!-- e4: Bill - Ordered / paid (₹3,200)                             -->
+          <path class="flow-pulse e4"    d="M 0 62 C 42 62, 62 50, 100 50" pathLength="100" />
+          <!-- e5: Bill - Bought 2 event tickets · next Sunday                -->
+          <path class="flow-pulse e5"    d="M 0 62 C 42 62, 62 50, 100 50" pathLength="100" />
+          <!-- e6: Valet - Called valet                                       -->
+          <path class="flow-pulse e6"    d="M 0 88 C 38 88, 62 50, 100 50" pathLength="100" />
+          <!-- e7: Valet - Car collected · she leaves · the LIVE moment       -->
+          <path class="flow-pulse e7"    d="M 0 88 C 38 88, 62 50, 100 50" pathLength="100" />
+        </svg>
+        <div class="signal-chip chip-menu"     style="left: 30%; top: 8%;"><strong>view</strong> · cocktails &amp; food</div>
+        <div class="signal-chip chip-register" style="left: 38%; top: 34%;"><strong>walk-in</strong> · party of 4 · VIP 7</div>
+        <div class="signal-chip chip-bill"     style="left: 38%; top: 66%;"><strong>order</strong> · ₹3,200 · UPI</div>
+        <div class="signal-chip chip-valet"    style="left: 30%; top: 92%;"><strong>valet</strong> · in 21:48 · out 1:22</div>
+      </div>
+
+      <div class="profile-pane">
+        <div class="profile-card">
+          <span class="pc-tag">Customer #4019</span>
+          <div class="pc-head">
+            <div class="pc-avatar">A</div>
+            <div class="pc-id">
+              <div class="pc-name">Aanya R.</div>
+              <div class="pc-meta">+91 98••• ••89 · Bangalore</div>
+            </div>
+            <span class="pc-badge">Loyalist</span>
+          </div>
+          <div class="pc-stats">
+            <div><span class="ps-k">Visits / 30d</span><span class="ps-v">3</span></div>
+            <div><span class="ps-k">Avg spend</span><span class="ps-v">₹2,400</span></div>
+            <div><span class="ps-k">Last seen</span><span class="ps-v">2d</span></div>
+          </div>
+          <div class="pc-section">
+            <div class="ai-label"><span class="ai-spark">Bash AI</span> knows</div>
+            <ul class="pc-traits">
+              <li><span>Favorite</span>Espresso Martini · Lazy Brunch</li>
+              <li><span>Music</span>House · Indie</li>
+              <li><span>Arrives</span>Fri / Sat · 10:30 pm</li>
+              <li><span>Vehicle</span>KA-01 · Hyundai Verna</li>
+            </ul>
+          </div>
+          <div class="pc-section">
+            <div class="feed-head">
+              <span class="live-pulse"></span>
+              <span class="live-label">Live · tracking tonight</span>
+              <span class="spacer"></span>
+              <span>Sat</span>
+            </div>
+            <ul class="activity-feed">
+              <li>
+                <span class="when">21:48</span>
+                <span class="what">Car entered · <em>Verna KA-01</em> handed to valet</span>
+              </li>
+              <li>
+                <span class="when">21:52</span>
+                <span class="what">Walk-in · party of 4 (2W / 2M) · <em>VIP Table 7</em></span>
+              </li>
+              <li>
+                <span class="when">22:05</span>
+                <span class="what">Viewed menu · <em>Espresso Martini ×3</em> · Margherita</span>
+              </li>
+              <li>
+                <span class="when">22:18</span>
+                <span class="what">Ordered <em>2 Martinis · 1 Pizza · 1 Fries</em> · ₹3,200</span>
+              </li>
+              <li>
+                <span class="when">23:14</span>
+                <span class="what">Bought 2 tickets · <em>Lazy Brunch · next Sunday</em></span>
+              </li>
+              <li>
+                <span class="when">01:22</span>
+                <span class="what">Called valet · car requested</span>
+              </li>
+              <li class="now">
+                <span class="when">01:25</span>
+                <span class="what">Car collected · she leaves · pickup in <em>3m 12s</em></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: WEALTH OF DATA - TWO FLYWHEELS -->
+  <section class="slide data-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>III · The Wealth of Data · Two Flywheels</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Wealth of Data</span>
+      <h1>One graph. <em>Two compounding flywheels</em>.</h1>
+    </div>
+
+    <div class="fw-stage">
+      <!-- LEFT FLYWHEEL - Venues improve (each venue's own data loop) -->
+      <div class="fw-wheel-col">
+        <div class="fw-wheel">
+          <svg class="fw-arcs" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle class="ring" cx="100" cy="100" r="70"/>
+          </svg>
+          <div class="fw-wheel-head">
+            <span class="kicker">I · Venue flywheel</span>
+            <h2>Every shift, the venue <em>knows more</em>.</h2>
+          </div>
+          <div class="fw-cards">
+            <div class="fw-card" data-pos="top">
+              <span class="num">01</span>
+              <span class="name">Capture - <em>Every signal</em></span>
+              <span class="line">Entry, valet, menu, order, ticket, pickup - <em>one customer ID</em>, every shift.</span>
+            </div>
+            <div class="fw-card" data-pos="right">
+              <span class="num">02</span>
+              <span class="name">Learn - <em>Bash AI</em></span>
+              <span class="line">Taste, party, spend, arrival, vehicle, cohort - a <em>living guest profile</em> per visit.</span>
+            </div>
+            <div class="fw-card" data-pos="bottom">
+              <span class="num">03</span>
+              <span class="name">Act - <em>On the floor</em></span>
+              <span class="line">Greet by name, seat smarter, recommend the right upsell - <em>profile-aware service</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="left">
+              <span class="num">04</span>
+              <span class="name">Return - <em>Win-back</em></span>
+              <span class="line">Drops, loyalty rewards, personalised invites - they come back <em>richer</em>.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT FLYWHEEL - Bash compounds (network of venues feeds the graph) -->
+      <div class="fw-wheel-col">
+        <div class="fw-wheel">
+          <svg class="fw-arcs" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle class="ring" cx="100" cy="100" r="70"/>
+          </svg>
+          <div class="fw-wheel-head">
+            <span class="kicker">II · Network flywheel</span>
+            <h2>Every venue makes the <em>graph richer</em>.</h2>
+          </div>
+          <div class="fw-cards">
+            <div class="fw-card" data-pos="top">
+              <span class="num">01</span>
+              <span class="name">Aggregate - <em>Cross-venue</em></span>
+              <span class="line">One guest across every club - a <em>city-wide nightlife graph</em> no one else has.</span>
+            </div>
+            <div class="fw-card" data-pos="right">
+              <span class="num">02</span>
+              <span class="name">Model - <em>Bash AI</em></span>
+              <span class="line">Keeps evolving on every venue's signal - <em>demand × genre × night</em>, who sells out, who churns, who pays late.</span>
+            </div>
+            <div class="fw-card" data-pos="bottom">
+              <span class="num">03</span>
+              <span class="name">Productise - <em>Network</em></span>
+              <span class="line">Lending, loyalty, ads, supply - only Bash has the <em>data to ship them</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="left">
+              <span class="num">04</span>
+              <span class="name">Attract - <em>More venues</em></span>
+              <span class="line">The graph becomes table stakes - every new venue <em>feeds it forward</em>.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw-outputs">
+      <div class="fw-out-col">
+        <span class="label">For the venue · by Monday</span>
+        <span class="line"><em>+25%</em> per-cover upsell · the right drink to the right cohort</span>
+        <span class="line"><em>−40%</em> walk-aways · valet flow + door speed up</span>
+        <span class="line"><em>2× LTV</em> on top-50 guests · auto win-back drops</span>
+      </div>
+      <div class="fw-out-col">
+        <span class="label">For the network · compounds quarterly</span>
+        <span class="line"><em>Programming intel</em> - genre × city × night, who actually sells out</span>
+        <span class="line"><em>Lending-grade scores</em> - first real GMV-backed credit in nightlife</span>
+        <span class="line"><em>Network products</em> - cross-venue loyalty · ads · supply</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: LIVE HOSPITALITY - BASH MANAGER (b2b demo iframe) -->
+  <section class="slide brief-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>IV · Bash Manager · An AI Team On Shift</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">An AI Team · On Shift</span>
+      <h1>Not a tool. <em>A team of AI agents - at work.</em></h1>
+    </div>
+
+    <div class="brief-stage">
+      <div class="brief-text">
+        <p class="brief-lede">
+          Bash Manager isn't a dashboard. <strong>Four AI agents</strong> work the venue tonight -
+          <em>analyst, moderator, host, operator</em>. They write the brief, queue the fixes,
+          run hospitality on the floor, and operate the place from <em>one chat</em>. The
+          manager just decides.
+        </p>
+        <div class="brief-caps">
+          <div class="brief-cap">
+            <span class="bc-num">01</span>
+            <span class="bc-name">The Brief - <em>Analytics</em></span>
+            <span class="bc-desc">Bash AI's read on the venue's performance - <em>revenue, cohorts, retention, conversion</em>. Analytics with a verdict, not just charts.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">02</span>
+            <span class="bc-name">Needs You - <em>Actions that age</em></span>
+            <span class="bc-desc">Nonstop checks for <em>expired posters, broken menus, negative reviews, idle stations</em>. A tight fix-list before each one stops mattering.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">03</span>
+            <span class="bc-name">Live Hospitality - <em>Engagement</em></span>
+            <span class="bc-desc">Profile-aware live actions - <em>recognize, greet, seat, save, upsell</em>. The right move for <em>this</em> guest, in the moment.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">04</span>
+            <span class="bc-name">Bash Agent - <em>Operations</em></span>
+            <span class="bc-desc">No conventional dashboard. <em>Ask anything in chat</em> - re-price a table, draft an event, build a guest list. Done in seconds.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brief-visual">
+        <div class="phone demo-phone">
+          <div class="screen">
+            <iframe src="html-design/b2b/index.html" title="Bash Manager - Live Demo" allow="autoplay"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="focus-backdrop" id="briefBackdrop"></div>
+    <button class="focus-dismiss" id="briefFocusDismiss" type="button">← Back</button>
+    <div class="focus-hint">
+      <span class="grp"><kbd>1</kbd> focus</span>
+      <span class="grp"><kbd>ESC</kbd> back</span>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       PART TWO · THE CONSUMER LAYER
+       ==================================================================== -->
+
+  <!-- SLIDE 6: B2C INTRO (mirror of slide 1) -->
+  <section class="slide title-slide intro-b2c">
+    <div class="act-tag">Part Two<span class="dot"></span>The Consumer Layer</div>
+    <img class="brand-big" src="bash-logo.svg" alt="Bash" />
+    <p class="tagline">Your outing has a reputation. <span class="em">Bash keeps score</span>.</p>
+    <div class="meta">Ships without venue buy-in · Hyderabad first</div>
+  </section>
+
+  <!-- SLIDE 7: THE CONSUMER APP - FIRST DEMO.
+       Mirror of slide 5 (Bash Manager). Editorial caps on the left,
+       live consumer prototype iframe on the right. Feature-led intro:
+       what the app does, with Bash AI as one of the features. -->
+  <section class="slide brief-slide planning-agent-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>VII · Bash · The Consumer App</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Consumer App · First Look</span>
+      <h1>One app for <em>all your outings</em>.</h1>
+    </div>
+
+    <div class="brief-stage">
+      <div class="brief-text">
+        <p class="brief-lede">
+          Bash is the app for going out - <strong>squads, check-ins, backfill, Wrapped</strong>,
+          all in one place. Plan with your crew inside the app, walk in and get recognized,
+          and <em>keep track of the journey</em> of your outings. <em>Bash AI</em> sits inside it -
+          surfacing the best outings with <em>direct bookable links</em>. <em>No long chats</em>.
+        </p>
+        <div class="brief-caps">
+          <div class="brief-cap">
+            <span class="bc-num">01</span>
+            <span class="bc-name">Squads - <em>Inside Bash</em></span>
+            <span class="bc-desc">Squads live <em>under the Bash app</em> - not WhatsApp, not group chats. Plan with your crew inside Bash, and <em>Bash AI</em> surfaces the <em>best outings</em> for the squad's vibe + budget, with <em>direct bookable links</em>.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">02</span>
+            <span class="bc-name">Check-in - <em>Recognized at the door</em></span>
+            <span class="bc-desc">Arrive and get spotted - <em>perks unlock, the table is held, the cover is comped</em>. The venue knows you're here before you've finished saying hi.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">03</span>
+            <span class="bc-name">Backfill - <em>Profile, day one</em></span>
+            <span class="bc-desc">Sign up and Bash <em>backfills your profile</em> from your past nights out - venues, squads, taste, streaks. <em>You don't start from zero</em>; the app already knows who you go out with and what you go out for.</span>
+          </div>
+          <div class="brief-cap">
+            <span class="bc-num">04</span>
+            <span class="bc-name">Wrapped - <em>Your year out</em></span>
+            <span class="bc-desc">The nights, the venues, the squad, the streaks - <em>your social year in review</em>. Shareable, screenshot-ready, and the reason next year's plans get bigger.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="brief-visual">
+        <div class="demo-tag">
+          <span class="live-pulse"></span>
+          <span>LIVE PROTOTYPE</span>
+        </div>
+        <div class="phone demo-phone">
+          <div class="screen">
+            <iframe src="https://bash-web.nikhil-pragna-k.workers.dev/app/now" title="Bash Consumer App - Live Demo" allow="autoplay"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="focus-backdrop"></div>
+    <button class="focus-dismiss" type="button">← Back</button>
+    <div class="focus-hint">
+      <span class="grp"><kbd>1</kbd> focus</span>
+      <span class="grp"><kbd>ESC</kbd> back</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 7: THE CROWD - mirror of slide 3.
+       Four sources on the left = data the venue cannot see. Curves carry
+       seven staggered pulses. Right pane carries 3 distinct persona cards
+       to show variety of customer journeys without a single venue signed. -->
+  <section class="slide graph-slide consumer-graph-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>V · The Crowd · What the venue can't see</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Crowd · No venue signed</span>
+      <h1>We know your customers - <em>before any venue signs</em>.</h1>
+    </div>
+
+    <div class="graph-stage with-squads">
+      <div class="graph-sources">
+        <div class="source">
+          <div class="src-head"><span class="src-num">01</span><span class="src-name">Group Outings</span></div>
+          <ul>
+            <li>Squad of 4 · regular Sat crew</li>
+            <li>Co-visit graph · 23 shared nights</li>
+            <li>Aanya picks 7/10 · the planner</li>
+            <li>Cross-city · Bangalore + Goa runs</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">02</span><span class="src-name">Check-ins</span></div>
+          <ul>
+            <li>47 check-ins · last 90 days</li>
+            <li>Residency · Kompound 8 · Soda 6</li>
+            <li>First-Of · 3 new venues opened</li>
+            <li>Late-night signature · post-1 am</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">03</span><span class="src-name">Next Plans</span></div>
+          <ul>
+            <li>Want-to-try list · 14 venues saved</li>
+            <li>Auto-RSVP · <em>Café 91</em> next Sat</li>
+            <li>Pre-game ritual · Thursday pattern</li>
+            <li>Drop-card waitlist · Mass</li>
+          </ul>
+        </div>
+        <div class="source">
+          <div class="src-head"><span class="src-num">04</span><span class="src-name">Wrapped &amp; Shares</span></div>
+          <ul>
+            <li>Monthly Wrapped · 3 shares</li>
+            <li>Night Card collection · 27</li>
+            <li>Tier-up brag · Bronze → Silver</li>
+            <li>Story reach · 1.2k impressions</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="graph-flow">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="flowGradC" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#fe8c00" stop-opacity="0.15"/>
+              <stop offset="55%"  stop-color="#fe8c00" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#fe8c00" stop-opacity="0.95"/>
+            </linearGradient>
+          </defs>
+          <path class="flow-path"        d="M 0 12 C 38 12, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 38 C 42 38, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 62 C 42 62, 62 50, 100 50" />
+          <path class="flow-path"        d="M 0 88 C 38 88, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 12 C 38 12, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 38 C 42 38, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 62 C 42 62, 62 50, 100 50" />
+          <path class="flow-path dashed" d="M 0 88 C 38 88, 62 50, 100 50" />
+          <!-- 7 pulses across the planning journey, staggered so each curve carries
+               only one dash at a time. y=12 Group Outings · y=38 Check-ins ·
+               y=62 Next Plans · y=88 Wrapped & Shares -->
+          <!-- e1: Check-ins      - Thu install + backfill 14 venues (visits ledger) -->
+          <path class="flow-pulse e1"    d="M 0 38 C 42 38, 62 50, 100 50" pathLength="100" />
+          <!-- e2: Next Plans     - Fri tap Kompound poster · added to want-to-try -->
+          <path class="flow-pulse e2"    d="M 0 62 C 42 62, 62 50, 100 50" pathLength="100" />
+          <!-- e3: Group Outings  - Sat "drinks tonight?" squad thread -->
+          <path class="flow-pulse e3"    d="M 0 12 C 38 12, 62 50, 100 50" pathLength="100" />
+          <!-- e4: Wrapped Shares - Sat tier-up · shared Night Card · 3 install -->
+          <path class="flow-pulse e4"    d="M 0 88 C 38 88, 62 50, 100 50" pathLength="100" />
+          <!-- e5: Check-ins      - Sat check-in at Kompound (NOT a Bash venue) -->
+          <path class="flow-pulse e5"    d="M 0 38 C 42 38, 62 50, 100 50" pathLength="100" />
+          <!-- e6: Check-ins      - Sun cross-venue check-in at Lazy Brunch -->
+          <path class="flow-pulse e6"    d="M 0 38 C 42 38, 62 50, 100 50" pathLength="100" />
+          <!-- e7: Next Plans     - Sun LIVE auto-RSVP for Café 91 next Saturday -->
+          <path class="flow-pulse e7"    d="M 0 62 C 42 62, 62 50, 100 50" pathLength="100" />
+        </svg>
+        <div class="signal-chip chip-menu"     style="left: 30%; top: 8%;"><strong>outings</strong> · squad · 23 nights</div>
+        <div class="signal-chip chip-register" style="left: 38%; top: 34%;"><strong>check-ins</strong> · 47 · 90d</div>
+        <div class="signal-chip chip-bill"     style="left: 38%; top: 66%;"><strong>next</strong> · 14 saved · auto-RSVP</div>
+        <div class="signal-chip chip-valet"    style="left: 30%; top: 92%;"><strong>wrapped</strong> · ×3 · 1.2k reach</div>
+      </div>
+
+      <!-- COL 3 (middle): Aanya's 3 squads. Pulses arriving from COL 2 land
+           here first. Each squad card carries a live action feed where the
+           most recent action slides in from the right (mirrors Aanya's
+           timeline pattern). Cards stay always visible. -->
+      <div class="squad-pane">
+        <svg class="squad-flow" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="sq-line" d="M 0 18 C 70 18, 86 50, 100 50" />
+          <path class="sq-line" d="M 0 50 C 22 50, 78 50, 100 50" />
+          <path class="sq-line" d="M 0 82 C 70 82, 86 50, 100 50" />
+        </svg>
+
+        <!-- Squad 1: Sat Crew - chat-driven planning. -->
+        <div class="squad-card sq1">
+          <div class="sq-head">
+            <span class="sq-tag">Squad 1 · Active now</span>
+            <span class="sq-name">Sat Crew · <em>chat</em></span>
+          </div>
+          <div class="sq-members">
+            <span class="sq-dots">
+              <span class="sq-dot a-orange">A</span>
+              <span class="sq-dot a-blue">R</span>
+              <span class="sq-dot a-green">K</span>
+              <span class="sq-dot a-pink">M</span>
+            </span>
+            <span class="sq-count">4 friends</span>
+          </div>
+          <ul class="sq-feed">
+            <li class="sf-1">Aanya: <em>"drinks tonight?"</em> · Sat 17:42</li>
+            <li class="sf-2">Bash AI · <em>3 venues</em> · Kompound 9:30</li>
+            <li class="sf-3"><em>3 in · 1 maybe</em> · table held · 21:30</li>
+            <li class="sf-4">Checked in · <em>Kompound</em> · Sat 23:10</li>
+          </ul>
+          <div class="sq-status">Sources <strong>2 events</strong> · drinks chat · check-in</div>
+        </div>
+
+        <!-- Squad 2: Office Crew - event-attendance squad. -->
+        <div class="squad-card sq2">
+          <div class="sq-head">
+            <span class="sq-tag">Squad 2 · Event attended</span>
+            <span class="sq-name">Office Crew · <em>event</em></span>
+          </div>
+          <div class="sq-members">
+            <span class="sq-dots">
+              <span class="sq-dot a-orange">A</span>
+              <span class="sq-dot a-teal">P</span>
+              <span class="sq-dot a-sky">N</span>
+              <span class="sq-dot a-pink">S</span>
+              <span class="sq-dot a-amber">D</span>
+              <span class="sq-dot a-lime">V</span>
+            </span>
+            <span class="sq-count">6 colleagues</span>
+          </div>
+          <ul class="sq-feed">
+            <li class="sf-1">Squad pic · <em>Sunburn Goa</em> · 6 went</li>
+            <li class="sf-2">Aanya tier-up · <strong>Bronze → Silver</strong></li>
+            <li class="sf-3">Wrap-share · <em>Night Card</em> · 1.2k reach</li>
+            <li class="sf-4">3 friends installed · <strong>co-visit chain</strong></li>
+          </ul>
+          <div class="sq-status">Sources <strong>1 event</strong> · Tier-up · Night Card share</div>
+        </div>
+
+        <!-- Squad 3: Brunch Club - recurring planning squad. -->
+        <div class="squad-card sq3">
+          <div class="sq-head">
+            <span class="sq-tag">Squad 3 · Planning</span>
+            <span class="sq-name">Brunch Club · <em>plan</em></span>
+          </div>
+          <div class="sq-members">
+            <span class="sq-dots">
+              <span class="sq-dot a-orange">A</span>
+              <span class="sq-dot a-purple">T</span>
+              <span class="sq-dot a-pink">An</span>
+              <span class="sq-dot a-sky">V</span>
+              <span class="sq-dot a-lime">So</span>
+            </span>
+            <span class="sq-count">5 brunchers</span>
+          </div>
+          <ul class="sq-feed">
+            <li class="sf-1"><em>Lazy Brunch · Sun 12 pm</em> · weekly</li>
+            <li class="sf-2">Table for 5 · <strong>confirmed</strong></li>
+            <li class="sf-3">Aanya cross-venue · <em>Sun 02:14</em></li>
+            <li class="sf-4">Repeats <strong>6 weekends in a row</strong></li>
+          </ul>
+          <div class="sq-status">Sources <strong>1 event</strong> · cross-venue · Lazy Brunch</div>
+        </div>
+      </div>
+
+      <!-- COL 4 (right): Aanya R. profile - full tracking card. Receives the
+           combined signal: raw data from COL 1 plus squad-attributed events
+           that flowed through COL 3. Live feed reads chronologically Thu →
+           Sun and labels which squad sourced each squad-driven event. -->
+      <div class="profile-pane single">
+        <div class="profile-card aanya-full">
+          <span class="pc-tag">Profile · Downloader #C-4019 · Bangalore</span>
+          <div class="pc-head">
+            <div class="pc-avatar">A</div>
+            <div class="pc-id">
+              <div class="pc-name">Aanya R.</div>
+              <div class="pc-meta">+91 98••• ••89 · <em>The Loyalist</em></div>
+            </div>
+            <span class="pc-badge">Loyalist</span>
+          </div>
+          <div class="pc-stats">
+            <div><span class="ps-k">Score</span><span class="ps-v" data-stat="score">312</span></div>
+            <div><span class="ps-k">Check-ins</span><span class="ps-v" data-stat="checkins">31</span></div>
+            <div><span class="ps-k">Squads</span><span class="ps-v" data-stat="squads">1</span></div>
+            <div><span class="ps-k">Venues</span><span class="ps-v" data-stat="venues">0</span></div>
+          </div>
+
+          <div class="pc-section">
+            <div class="ai-label"><span class="ai-spark">Badges</span> earned · 8</div>
+            <div class="badges">
+              <span class="badge b-backfill"><span class="b-ico">◆</span>Backfilled 14</span>
+              <span class="badge b-squad"><span class="b-ico">★</span>Squad MVP</span>
+              <span class="badge b-streak"><span class="b-ico">▲</span>Streak 4w</span>
+              <span class="badge b-wrap"><span class="b-ico">◐</span>Wrapper ×3</span>
+              <span class="badge b-first"><span class="b-ico">●</span>First-Of 3</span>
+              <span class="badge b-cross"><span class="b-ico">⤳</span>Cross-City</span>
+              <span class="badge b-night"><span class="b-ico">◑</span>Late Nighter</span>
+              <span class="badge b-host"><span class="b-ico">◇</span>Host Fave</span>
+            </div>
+          </div>
+
+          <div class="pc-section">
+            <div class="feed-head">
+              <span class="live-pulse"></span>
+              <span class="live-label">Live · planning this weekend</span>
+              <span class="spacer"></span>
+              <span>Thu → Sun</span>
+            </div>
+            <ul class="activity-feed">
+              <li>
+                <span class="when">Thu 19:30</span>
+                <span class="what">Installed Bash · backfilled <em>14 venues</em></span>
+              </li>
+              <li>
+                <span class="when">Fri 14:18</span>
+                <span class="what">Tapped <em>Kompound</em> · saved to want-to-try</span>
+              </li>
+              <li>
+                <span class="when">Sat 17:42</span>
+                <span class="what"><em>Sat Crew</em> · "drinks tonight?" · AI surfaces 3</span>
+              </li>
+              <li>
+                <span class="when">Sat 19:55</span>
+                <span class="what">Tier-up · shared <em>Night Card</em> · 1.2k reach</span>
+              </li>
+              <li>
+                <span class="when">Sat 23:10</span>
+                <span class="what"><em>Sat Crew</em> · checked in · Kompound</span>
+              </li>
+              <li>
+                <span class="when">Sun 02:14</span>
+                <span class="what"><em>Brunch Club</em> · cross-venue · Lazy Brunch</span>
+              </li>
+              <li class="now">
+                <span class="when">Sun 11:48</span>
+                <span class="what">Auto-RSVP · <em>Café 91 · next Saturday</em></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: THE CONSUMER FLYWHEEL.
+       Mirrors slide 4 (One Graph · Two Flywheels) - two columns of 4
+       capability cards each, plus a 2-column outputs row at the bottom.
+       Left = the consumer loop. Right = the network compounding. -->
+  <section class="slide data-slide compound-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>VI · The Consumer Flywheel · Compounds before a venue signs</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Consumer Flywheel</span>
+      <h1>One install. <em>Two compounding flywheels</em>.</h1>
+    </div>
+
+    <div class="fw-stage">
+      <!-- LEFT - the user loop: how each crowd member comes in, climbs, shares -->
+      <div class="fw-wheel-col">
+        <div class="fw-wheel">
+          <svg class="fw-arcs" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle class="ring" cx="100" cy="100" r="70"/>
+          </svg>
+          <div class="fw-wheel-head">
+            <span class="kicker">I · The Loop</span>
+            <h2>Every share, the crowd <em>grows itself</em>.</h2>
+          </div>
+          <div class="fw-cards">
+            <div class="fw-card" data-pos="top">
+              <span class="num">01</span>
+              <span class="name">Hook - <em>"What's your Bash score?"</em></span>
+              <span class="line">The phrase plants on IG. <em>The score is the ad</em>. Curiosity drives the install.</span>
+            </div>
+            <div class="fw-card" data-pos="right">
+              <span class="num">02</span>
+              <span class="name">Backfill - <em>14 venues · 90 s</em></span>
+              <span class="line">Pick where you've been. Score lands, tier appears - <em>profile in 90 seconds</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="bottom">
+              <span class="num">03</span>
+              <span class="name">Check-in - <em>Every shift, everywhere</em></span>
+              <span class="line">One tap. Score lifts. Tier climbs. <em>The grind is the product</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="left">
+              <span class="num">04</span>
+              <span class="name">Share - <em>Card · Wrapped · Tier-up</em></span>
+              <span class="line">Every share is an install loop. Friends download to <em>compete</em>.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT - the network compound: every install fattens the graph -->
+      <div class="fw-wheel-col">
+        <div class="fw-wheel">
+          <svg class="fw-arcs" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle class="ring" cx="100" cy="100" r="70"/>
+          </svg>
+          <div class="fw-wheel-head">
+            <span class="kicker">II · The Compound</span>
+            <h2>Every share makes the <em>graph richer</em>.</h2>
+          </div>
+          <div class="fw-cards">
+            <div class="fw-card" data-pos="top">
+              <span class="num">01</span>
+              <span class="name">CAC drops - <em>Score is the ad</em></span>
+              <span class="line">Every share is free acquisition. <em>The user is the ad budget</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="right">
+              <span class="num">02</span>
+              <span class="name">Graph grows - <em>~14 venues per install</em></span>
+              <span class="line">Each downloader backfills ~14 venues - <em>11 of them not on Bash yet</em>.</span>
+            </div>
+            <div class="fw-card" data-pos="bottom">
+              <span class="num">03</span>
+              <span class="name">Multiplier - <em>design target ×3 / week</em></span>
+              <span class="line">8 weeks of ×3: 1 → 3 → 9 → … → <em>~3,000 at Venue X</em>. Instrumented from day one — not asserted.</span>
+            </div>
+            <div class="fw-card" data-pos="left">
+              <span class="num">04</span>
+              <span class="name">Sales flips - <em>"When can we start?"</em></span>
+              <span class="line">"3,000 of your customers are already on Bash." <em>Venues come to us</em>.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fw-outputs">
+      <div class="fw-out-col">
+        <span class="label">For the crowd · weekly</span>
+        <span class="line"><em>Score climbs</em> · streaks compound, tier unlocks perks</span>
+        <span class="line"><em>Squad surfaces</em> · AI plans the night before they ask</span>
+        <span class="line"><em>Cheaper door</em> · drop-cards · friend-of-host comps</span>
+      </div>
+      <div class="fw-out-col">
+        <span class="label">For Bash · compounds weekly</span>
+        <span class="line"><em>CAC ↓</em> · every share is free distribution</span>
+        <span class="line"><em>Graph ↑</em> · ~14 venues per install · 11 not on Bash</span>
+        <span class="line"><em>Sales lever</em> · 3,000 at Venue X · pitch flips in 8 weeks</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: TRACTION - real numbers, bootstrapped -->
+  <section class="slide traction-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>IX · Traction · Live in Hyderabad</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">Traction · Bootstrapped</span>
+      <h1>Live in Hyderabad. <em>120,000 customers already in the graph.</em></h1>
+    </div>
+
+    <style>
+      .traction-slide .biz-stats { flex: 0 0 auto; }
+      .traction-slide .biz-stat { gap: 6px; }
+      .traction-slide .bs-head { font-family: var(--display); font-style: italic; font-size: clamp(14px, 1.15vw, 18px); line-height: 1.2; color: var(--ink); }
+      .traction-slide .bs-ctx { font-family: var(--body); font-size: clamp(12px, 0.98vw, 14px); line-height: 1.5; color: var(--ink-2); margin-top: clamp(8px, 1.1vh, 13px); padding-top: clamp(8px, 1.1vh, 13px); border-top: 1px solid var(--rule); }
+      .traction-slide .bs-ctx em { color: var(--orange); font-style: normal; font-weight: 500; }
+      .traction-slide .tr-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(20px, 3.6vh, 48px); }
+      .traction-slide .tr-foot { margin-top: 0; display: flex; flex-wrap: wrap; gap: clamp(10px, 1.6vw, 30px); font-family: var(--mono); font-size: clamp(10px, 0.84vw, 12px); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+      .traction-slide .tr-foot em { color: var(--orange); font-style: normal; }
+    </style>
+    <div class="tr-body">
+    <div class="biz-stats">
+      <div class="biz-stat">
+        <span class="bs-k">Venues live</span>
+        <span class="bs-v">18</span>
+        <span class="bs-head">across Hyderabad</span>
+        <span class="bs-ctx">Won by <em>cold walk-in</em> — the hardest channel in nightlife, now turning to referrals.</span>
+      </div>
+      <div class="biz-stat">
+        <span class="bs-k">Customers captured</span>
+        <span class="bs-v">1,20,000</span>
+        <span class="bs-head">verified, at the table</span>
+        <span class="bs-ctx">First-party guest identity <em>no single POS holds</em> — the seed of the graph.</span>
+      </div>
+      <div class="biz-stat">
+        <span class="bs-k">Data points / month</span>
+        <span class="bs-v">30–40K</span>
+        <span class="bs-head">scans across the night</span>
+        <span class="bs-ctx">Menu, entry, valet, tickets — the graph <em>compounds every weekend</em>.</span>
+      </div>
+      <div class="biz-stat">
+        <span class="bs-k">Revenue / venue</span>
+        <span class="bs-v">₹3,000<em>/mo</em></span>
+        <span class="bs-head">recurring</span>
+        <span class="bs-ctx">Under ops tools (Petpooja ₹15–30K/yr) — <em>room to 10×</em> as we sell intelligence.</span>
+      </div>
+    </div>
+
+    <div class="venue-strip">
+      <span class="vs-label">Live at</span>
+      <span>Babylon Brewery &amp; Club</span>
+      <span>Kompound</span>
+      <span>Malibu</span>
+      <span>Over The Moon</span>
+      <span>Happy Yard</span>
+      <span>Dune</span>
+      <span>Paradice</span>
+      <span>Alley91</span>
+      <span>The League FD</span>
+    </div>
+
+    <div class="tr-foot">
+      <span>Bootstrapped · <em>5-person team</em></span>
+      <span><em>6 modules</em> shipped</span>
+      <span><em>₹12.5K/mo</em> infra runs the stack</span>
+      <span>Consumer app · <em>pre-launch</em></span>
+    </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       PART THREE · THE BUSINESS — Market / The Field / The Model.
+       All figures from fundraising/03-market-research.md (2026-06-12),
+       primary-sourced where tagged. Do NOT add vendor/press numbers from
+       the do-not-cite list (night-economy ₹ figures, PBCL as fact, etc.).
+       ==================================================================== -->
+
+  <!-- ACT BREAK: Part Three (mirror of slide 6) -->
+  <section class="slide title-slide intro-b2c">
+    <div class="act-tag">Part Three<span class="dot"></span>The Opportunity</div>
+    <img class="brand-big" src="bash-logo.svg" alt="Bash" />
+    <p class="tagline">Two proven categories. <span class="em">One empty market</span>.</p>
+    <div class="meta">The market · The field · The model</div>
+  </section>
+
+  <!-- THE MARKET — TAM/SAM/SOM + why-now. Hero stat: excise licence scarcity. -->
+  <section class="slide market-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>X · The Market · The size of the prize</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Market · Why Now</span>
+      <h1>India is going out — and <em>formalising into our exact lane.</em></h1>
+    </div>
+
+    <style>
+      .market-slide .tsm-canvas, .market-slide .tsm-rows { height: min(100%, clamp(300px, 30vw, 470px)); }
+      .market-slide .tsm-row { gap: 5px; }
+      .market-slide .tsm-row.r-sam { top: 39%; }
+      .market-slide .tsm-row.r-som { top: 72%; }
+      .market-slide .tsm-row .tr-tag { font-size: clamp(11px, 0.92vw, 13px); }
+      .market-slide .tsm-row .tr-num { font-size: clamp(26px, 2.3vw, 40px); }
+      .market-slide .tsm-row .tr-name { font-size: clamp(14px, 1.2vw, 18px); }
+      .market-slide .tsm-row .tr-basis { font-family: var(--body); font-size: clamp(11.5px, 0.98vw, 14px); letter-spacing: 0; line-height: 1.45; color: var(--ink-2); }
+      .market-slide .whynow-rail .wn-head { font-size: 12px; }
+      .market-slide .wn-card .wn-stat { font-size: clamp(18px, 1.6vw, 25px); }
+      .market-slide .wn-card .wn-line { font-family: var(--body); font-size: clamp(12px, 1vw, 14px); letter-spacing: 0; line-height: 1.5; }
+    </style>
+    <div class="market-stage">
+      <div class="tsm-wrap">
+        <div class="tsm-canvas">
+          <div class="tsm-circle tam"><span class="tc-label">TAM</span></div>
+          <div class="tsm-circle sam"><span class="tc-label">SAM</span></div>
+          <div class="tsm-circle som"><span class="tc-label">SOM</span></div>
+        </div>
+        <div class="tsm-rows">
+          <div class="tsm-row r-tam">
+            <span class="tr-tag">TAM · Total market</span>
+            <span class="tr-num">₹2.5 <em>lakh cr</em></span>
+            <span class="tr-name">India's organised going-out market</span>
+            <span class="tr-basis">+ ₹14,500 Cr live events · software layer <em>$254M → $848M</em> by 2030.</span>
+          </div>
+          <div class="tsm-row r-sam">
+            <span class="tr-tag">SAM · Serviceable</span>
+            <span class="tr-num">~15,000 <em>venues</em></span>
+            <span class="tr-name">Premium social venues · top 8 metros</span>
+            <span class="tr-basis">Bottom-up from <em>state excise registers</em> · ₹36K/yr SaaS ARPU.</span>
+          </div>
+          <div class="tsm-row r-som">
+            <span class="tr-tag">SOM · 24–36 months</span>
+            <span class="tr-num">₹8–15 Cr <em>ARR</em></span>
+            <span class="tr-name">The Hyderabad → Bengaluru wedge</span>
+            <span class="tr-basis">15–20% of HYD + BLR premium venues · <em>before consumer revenue</em>.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="whynow-rail">
+        <span class="wn-head">Why now</span>
+        <div class="wn-card">
+          <span class="wn-stat">44% → <em>53%</em> organised</span>
+          <span class="wn-line">Organised dining overtakes unorganised by ~2027 (NRAI) — <em>Bash's exact segment</em>, compounding 13%/yr.</span>
+        </div>
+        <div class="wn-card">
+          <span class="wn-stat">147 bids · <em>1 licence</em></span>
+          <span class="wn-line">Hyderabad's 2025 bar round: ~3,520 applications for 24 licences. Premium venues are <em>scarce and countable</em>.</span>
+        </div>
+        <div class="wn-card">
+          <span class="wn-stat">377M Gen Z · <em>48%</em></span>
+          <span class="wn-line">India's largest generation drives ~half of dining spend (Snap×BCG). Live events grew <em>44% in 2025</em>.</span>
+        </div>
+      </div>
+    </div>
+    <p class="src-note">Sources: NRAI India Food Services Report 2024 · FICCI-EY M&amp;E Report 2026 · Snap Inc. × BCG "Gen Z in India" 2024 · Telangana Excise 2B bar register (excise.telangana.gov.in) · Grand View Research, India restaurant-management software (vendor estimate).</p>
+  </section>
+
+  <!-- THE FIELD — competition 2×2 + three beats. White space = identity layer. -->
+  <section class="slide field-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>XI · The Field · Why us, why now</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Field</span>
+      <h1>Everyone fights for the transaction. <em>Nobody owns the night.</em></h1>
+    </div>
+
+    <style>
+      .field-slide .quad-axis { font-size: 11px; }
+      .field-slide .quad-cell { gap: 7px; }
+      .field-slide .quad-cell .qc-tag { font-size: 10px; }
+      .field-slide .quad-cell .qc-who { font-size: clamp(15px, 1.25vw, 20px); }
+      .field-slide .quad-cell .qc-note { font-family: var(--body); font-size: clamp(12px, 1.02vw, 14px); letter-spacing: 0; line-height: 1.5; }
+      .field-slide .quad-bash .qb-line { font-size: 10px; }
+      .field-slide .field-beat .fb-line { font-family: var(--body); font-size: clamp(12.5px, 1.08vw, 15px); letter-spacing: 0; line-height: 1.5; }
+      .field-slide .field-beats { justify-content: space-between; padding: clamp(6px, 1.2vh, 16px) 0; gap: clamp(16px, 2vh, 28px); }
+      .field-slide .field-beat { padding-left: 16px; border-left: 2px solid var(--orange); }
+    </style>
+    <div class="field-stage">
+      <div class="quad-wrap">
+        <div class="quad-axis top">Identity &amp; Intelligence</div>
+        <div class="quad-grid">
+          <div class="quad-cell hot">
+            <span class="qc-tag">Consumer × Identity</span>
+            <span class="qc-who">Beli · Posh · Partiful</span>
+            <span class="qc-note">$12M–$59M raised abroad on Gen-Z going-out identity. <em>No India player.</em></span>
+          </div>
+          <div class="quad-cell hot">
+            <span class="qc-tag">Venue × Intelligence</span>
+            <span class="qc-who">SevenRooms · Blackbird</span>
+            <span class="qc-note"><em>$1.2B</em> DoorDash exit (2025) · $85M raised. <em>Empty in India.</em></span>
+          </div>
+          <div class="quad-cell">
+            <span class="qc-tag">Consumer × Transactions</span>
+            <span class="qc-who">District · BookMyShow</span>
+            <span class="qc-note">District did <em>₹2,736 Cr/qtr</em> — but loses ₹81 Cr/qtr. A take-rate war Bash doesn't fight.</span>
+          </div>
+          <div class="quad-cell">
+            <span class="qc-tag">Venue × Transactions</span>
+            <span class="qc-who">Petpooja · DotPe · Reelo</span>
+            <span class="qc-note">100K+ outlets own the bill; Reelo's loyalty is <em>walled per-brand</em>. None own the guest across venues.</span>
+          </div>
+          <div class="quad-bash">
+            <img src="bash-logo.svg" alt="Bash" />
+            <span class="qb-line">Both sides of the door · one graph</span>
+          </div>
+        </div>
+        <div class="quad-axis bottom">Tickets · Tables · Bills</div>
+      </div>
+
+      <div class="field-beats">
+        <div class="field-beat">
+          <span class="fb-num">01</span>
+          <span class="fb-name">The bottom half is a transaction war</span>
+          <span class="fb-line">District (Eternal, <em>₹2,736 Cr/qtr</em>) and the POS players fight over GMV — at a loss, on commissions venues resent.</span>
+        </div>
+        <div class="field-beat">
+          <span class="fb-num">02</span>
+          <span class="fb-name">The top half is proven — and empty in India</span>
+          <span class="fb-line">SevenRooms exited at <em>$1.2B</em>; Beli, Posh, Partiful raised abroad. Nobody has built either side for India's nightlife.</span>
+        </div>
+        <div class="field-beat">
+          <span class="fb-num">03</span>
+          <span class="fb-name">Bash is the only one on both axes</span>
+          <span class="fb-line">Venue ops generate the identity; the crowd makes the ops indispensable. <em>Aggregators can't copy it without killing their own take-rate.</em></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE MODEL — three revenue eras, each unlocking the next. -->
+  <section class="slide model-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>XII · The Model · How Bash earns</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Model</span>
+      <h1>Three ways to earn — <em>each unlocks the next.</em></h1>
+    </div>
+
+    <style>
+      .model-slide .model-stage { align-content: center; align-items: stretch; gap: clamp(14px, 1.6vw, 26px); }
+      .model-slide .era { min-height: clamp(300px, 44vh, 400px); }
+      .model-slide .era ul li { font-family: var(--body); font-size: clamp(12px, 1vw, 14px); letter-spacing: 0; line-height: 1.5; }
+      .model-slide .era .era-math { font-family: var(--body); font-size: clamp(12px, 1vw, 14px); letter-spacing: 0; }
+    </style>
+    <div class="model-stage">
+      <div class="era now">
+        <span class="era-tag">Now · Live</span>
+        <span class="era-name">Venue SaaS</span>
+        <span class="era-sub"><em>₹3,000/mo</em> per venue, recurring</span>
+        <ul>
+          <li>18 venues live · bootstrapped</li>
+          <li>6 modules — menu, register, valet, entry, tickets, <em>intelligence</em></li>
+          <li>Priced <em>under</em> POS (Petpooja ₹15–30K/yr)</li>
+          <li><em>Sticky</em> — runs the whole night, not one feature</li>
+        </ul>
+        <span class="era-math">₹36K/yr per venue · <em>recurring from day one</em></span>
+      </div>
+      <div class="era">
+        <span class="era-tag">Next · Building</span>
+        <span class="era-name">Customer intelligence</span>
+        <span class="era-sub">The layer <em>no POS sells</em></span>
+        <ul>
+          <li>Cross-venue guest identity — a gap Reelo's <em>per-brand</em> loyalty can't fill</li>
+          <li>Price expands as we sell intelligence, not menus</li>
+          <li>Smart Arrival, residency, drop cards</li>
+          <li>Owned WhatsApp channel · <em>80%+</em> open rates</li>
+        </ul>
+        <span class="era-math">5–10× ARPU as intelligence <em>replaces the menu</em></span>
+      </div>
+      <div class="era">
+        <span class="era-tag">Then · The graph</span>
+        <span class="era-name">Consumer + data</span>
+        <span class="era-sub">Identity becomes <em>the asset</em></span>
+        <ul>
+          <li>Subscription on status — the <em>Strava model</em> (~85% of revenue)</li>
+          <li>Venue data products on the going-out graph</li>
+          <li>Ticketing as a loop feature, <em>not</em> a take-rate war</li>
+          <li>Beli proved the engagement — <em>we monetise it</em></li>
+        </ul>
+        <span class="era-math">$1.2B ceiling — <em>SevenRooms → DoorDash, 2025</em></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 16: THE ASK - ₹1.5 Cr pre-seed.
+       Right-sized for the micro-VC / syndicate tier (100x ₹1.25 Cr, All In, IPV).
+       Use-of-funds is bottoms-up: ~18 months of a lean team + the consumer launch.
+       Milestones are written to UNLOCK the larger seed, not to be the seed itself.
+       Founder: confirm the amount (₹1-2 Cr) and the split before any external send. -->
+  <section class="slide ask-slide">
+    <div class="masthead">
+      <img class="brand" src="bash-logo.svg" alt="Bash" />
+      <span>XIII · The Ask · Pre-seed</span>
+    </div>
+    <div class="surface-headline">
+      <span class="kicker">The Ask</span>
+      <h1>One round to make Hyderabad <em>the proof city</em>.</h1>
+    </div>
+
+    <div class="ask-stage">
+      <div class="ask-left">
+        <div class="ask-amount">₹1.5 <em>crore</em></div>
+        <div class="ask-stage-line">Pre-seed · iSAFE · Spraresoft Tech Pvt. Ltd. · Hyderabad</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <span class="counter" id="counter">01 / 06</span>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  let idx = 0;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function render() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    counter.textContent = `${pad(idx + 1)} / ${pad(slides.length)}`;
+    history.replaceState(null, '', `#${idx + 1}`);
+  }
+  function go(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    render();
+  }
+
+  prev.addEventListener('click', () => go(idx - 1));
+  next.addEventListener('click', () => go(idx + 1));
+
+  document.addEventListener('keydown', (e) => {
+    // Don't hijack keys when the user is interacting with a phone demo iframe
+    // or typing into an input/textarea - Space and arrows are needed there.
+    const a = document.activeElement;
+    if (a && (a.tagName === 'IFRAME' || a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      go(idx + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      go(idx - 1);
+    } else if (e.key === 'Home') {
+      go(0);
+    } else if (e.key === 'End') {
+      go(slides.length - 1);
+    }
+  });
+
+  // Boot from hash
+  const initial = parseInt(location.hash.slice(1), 10);
+  if (!isNaN(initial) && initial >= 1 && initial <= slides.length) {
+    idx = initial - 1;
+  }
+  render();
+
+  // Scale iframes so each renders at a true mobile viewport (420px) and fits the phone screen
+  const MOBILE_VW = 420;
+  function fitIframes() {
+    document.querySelectorAll('.mini-phone .screen, .demo-phone .screen').forEach(screen => {
+      const iframe = screen.querySelector('iframe');
+      if (!iframe) return;
+      const w = screen.clientWidth;
+      const h = screen.clientHeight;
+      if (!w || !h) return;
+      const scale = w / MOBILE_VW;
+      iframe.style.width = MOBILE_VW + 'px';
+      iframe.style.height = (h / scale) + 'px';
+      iframe.style.transform = `scale(${scale})`;
+    });
+  }
+  window.addEventListener('load', fitIframes);
+  window.addEventListener('resize', fitIframes);
+  // Re-fit after font load + a small delay (slide transitions, iframe load)
+  requestAnimationFrame(() => requestAnimationFrame(fitIframes));
+  setTimeout(fitIframes, 300);
+  setTimeout(fitIframes, 1500);
+
+  // Slide 3 - compute each pulse path's true visual pixel length so the
+  // dasharray cycle traverses it cleanly (one dash on the line at a time).
+  // Without this, preserveAspectRatio="none" + non-scaling-stroke causes the
+  // dash pattern to repeat several times across the curve.
+  function fitPulses() {
+    document.querySelectorAll('.graph-flow .flow-pulse').forEach(p => {
+      const svg = p.ownerSVGElement;
+      if (!svg) return;
+      const rect = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      if (!rect.width || !rect.height || !vb.width || !vb.height) return;
+      const sx = rect.width / vb.width;
+      const sy = rect.height / vb.height;
+      const userLen = p.getTotalLength();
+      if (!userLen) return;
+      // Sample the path and accumulate distance in viewport pixels
+      const samples = 40;
+      let visualLen = 0;
+      let prev = p.getPointAtLength(0);
+      for (let i = 1; i <= samples; i++) {
+        const cur = p.getPointAtLength(userLen * i / samples);
+        visualLen += Math.hypot((cur.x - prev.x) * sx, (cur.y - prev.y) * sy);
+        prev = cur;
+      }
+      const travel = -(visualLen + 24);
+      p.style.setProperty('--pulse-travel', `${travel}px`);
+    });
+  }
+  window.addEventListener('load', fitPulses);
+  window.addEventListener('resize', fitPulses);
+  requestAnimationFrame(() => requestAnimationFrame(fitPulses));
+  setTimeout(fitPulses, 200);
+  setTimeout(fitPulses, 800);
+
+  // Slide 3 / Slide 7 — anchor each curve to its source card's vertical centre
+  // so the origin dots and the curve start-points stay in sync even when the
+  // cards are compact (flex: 0 0 auto, centered) instead of stretched.
+  // Original y-values 12 / 38 / 62 / 88 map to cards 0..3 (top to bottom).
+  // Scoped per .graph-stage so multiple slides can run independently.
+  function fitFlow() {
+    document.querySelectorAll('.graph-stage').forEach(stage => {
+      const sources = stage.querySelector('.graph-sources');
+      const cards   = stage.querySelectorAll('.graph-sources > .source');
+      const flow    = stage.querySelector('.graph-flow');
+      if (!sources || cards.length < 4 || !flow) return;
+      const flowRect = flow.getBoundingClientRect();
+      if (!flowRect.height) return;
+      // Card centre Y mapped to .graph-flow's 0-100 viewBox space.
+      const cardY = [...cards].map(c => {
+        const r = c.getBoundingClientRect();
+        return ((r.top + r.height / 2 - flowRect.top) / flowRect.height) * 100;
+      });
+      const origYs = { 12: 0, 38: 1, 62: 2, 88: 3 };
+      flow.querySelectorAll('path').forEach(path => {
+        const d = path.getAttribute('d') || '';
+        const m = d.match(/^M\s+0\s+(\d+(?:\.\d+)?)\s+C\s+([0-9.]+)\s+(\d+(?:\.\d+)?),/);
+        if (!m) return;
+        const origY = Math.round(parseFloat(m[1]));
+        const cardIdx = origYs[origY];
+        if (cardIdx == null) return;
+        const newY = cardY[cardIdx].toFixed(2);
+        const cp1x = m[2];
+        const newD = `M 0 ${newY} C ${cp1x} ${newY}, 62 50, 100 50`;
+        path.setAttribute('d', newD);
+      });
+      // Reposition the signal chips along each curve to match the new card centres.
+      const chipMap = { 'chip-menu': 0, 'chip-register': 1, 'chip-bill': 2, 'chip-valet': 3 };
+      Object.entries(chipMap).forEach(([cls, idx]) => {
+        const chip = flow.querySelector('.signal-chip.' + cls);
+        if (!chip) return;
+        chip.style.top = cardY[idx].toFixed(2) + '%';
+        chip.style.transform = 'translateY(-50%)';
+      });
+    });
+    if (typeof fitPulses === 'function') fitPulses();
+  }
+  window.addEventListener('load', fitFlow);
+  window.addEventListener('resize', fitFlow);
+  requestAnimationFrame(() => requestAnimationFrame(fitFlow));
+  setTimeout(fitFlow, 200);
+  setTimeout(fitFlow, 900);
+
+  // ---- Aanya profile: live-ticking stats ----
+  // Stays in lock-step with the 14s CSS pulse cycle. Score interpolates
+  // continuously (always-growing feel); Check-ins / Squads / Venues snap
+  // at each pulse landing % so the bump coincides with the row pop in
+  // Aanya's feed. Stage 0 is the cycle start; stages 1-7 match pulse
+  // landings at 9 / 20 / 31 / 42 / 53 / 64 / 75 %.
+  (function setupProfileTicker() {
+    const card = document.querySelector('.profile-card.aanya-full');
+    if (!card) return;
+    const elScore   = card.querySelector('[data-stat="score"]');
+    const elCheck   = card.querySelector('[data-stat="checkins"]');
+    const elSquads  = card.querySelector('[data-stat="squads"]');
+    const elVenues  = card.querySelector('[data-stat="venues"]');
+
+    // [at%, score, check-ins, squads, venues]
+    const stages = [
+      { at: 0,  score: 312, checkins: 31, squads: 1, venues: 0  },
+      { at: 9,  score: 372, checkins: 45, squads: 1, venues: 14 }, // Installed + backfill 14
+      { at: 20, score: 408, checkins: 45, squads: 1, venues: 15 }, // Tapped Kompound
+      { at: 31, score: 458, checkins: 45, squads: 2, venues: 18 }, // Sat Crew chat · AI surfaces 3
+      { at: 42, score: 508, checkins: 45, squads: 2, venues: 18 }, // Tier-up · Night Card share
+      { at: 53, score: 548, checkins: 46, squads: 2, venues: 19 }, // Sat Crew check-in · Kompound
+      { at: 64, score: 580, checkins: 47, squads: 3, venues: 20 }, // Brunch Club cross-venue
+      { at: 75, score: 612, checkins: 47, squads: 3, venues: 21 }, // Auto-RSVP Café 91
+    ];
+
+    const last = { score: null, checkins: null, squads: null, venues: null };
+
+    function setSnap(el, key, val) {
+      if (!el || last[key] === val) return;
+      el.textContent = String(val);
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+      last[key] = val;
+    }
+    function frame() {
+      const t = (performance.now() % 14000) / 14000 * 100;
+      // current stage = latest stage.at <= t
+      let cur = stages[0];
+      for (let i = 0; i < stages.length; i++) {
+        if (stages[i].at <= t) cur = stages[i];
+      }
+      setSnap(elScore,  'score',    cur.score);
+      setSnap(elCheck,  'checkins', cur.checkins);
+      setSnap(elSquads, 'squads',   cur.squads);
+      setSnap(elVenues, 'venues',   cur.venues);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // ---- Slide 2: phone focus state machine ----
+  // Spotlight only: focused phone enlarges to center, others dim in place.
+  // Triggered via click / 1-4 keys / arrows / Esc.
+  (function setupPhoneFocus() {
+    const surface = document.querySelector('.surface-slide');
+    if (!surface) return;
+    const minis = Array.from(surface.querySelectorAll('.mini'));
+    const phones = minis.map(m => m.querySelector('.mini-phone'));
+    const dismissBtn = surface.querySelector('#focusDismiss');
+    let focusIdx = -1;
+    let cachedRects = [];
+
+    function measureNaturals() {
+      cachedRects = phones.map(p => p.getBoundingClientRect());
+    }
+
+    function apply() {
+      const active = focusIdx !== -1;
+      surface.classList.toggle('fx-spotlight', active);
+
+      if (!active) {
+        minis.forEach((m, i) => {
+          m.classList.remove('is-focused', 'is-dimmed');
+          phones[i].style.transform = '';
+        });
+        return;
+      }
+
+      const slideRect = surface.getBoundingClientRect();
+      const cx = slideRect.left + slideRect.width / 2;
+      const cy = slideRect.top + slideRect.height / 2;
+      const targetH = slideRect.height - 220;
+      const scaleCap = 1.7;
+
+      minis.forEach((m, i) => {
+        const phone = phones[i];
+        const r = cachedRects[i];
+        if (!r) return;
+        if (i === focusIdx) {
+          m.classList.add('is-focused');
+          m.classList.remove('is-dimmed');
+          const pcx = r.left + r.width / 2;
+          const pcy = r.top + r.height / 2;
+          const scale = Math.min(targetH / r.height, scaleCap);
+          phone.style.transform = `translate(${cx - pcx}px, ${cy - pcy}px) scale(${scale})`;
+        } else {
+          m.classList.add('is-dimmed');
+          m.classList.remove('is-focused');
+          phone.style.transform = '';
+        }
+      });
+    }
+
+    function focus(i) {
+      if (i < 0 || i >= phones.length) return;
+      if (focusIdx === -1) measureNaturals();
+      focusIdx = i;
+      apply();
+    }
+    function unfocus() {
+      focusIdx = -1;
+      apply();
+    }
+
+    minis.forEach((m, i) => {
+      phones[i].addEventListener('click', (e) => {
+        if (focusIdx === i && e.target.closest('.screen')) return;
+        if (focusIdx === i) unfocus();
+        else focus(i);
+      });
+    });
+
+    // Backdrop catches every click outside the focused phone — no dead zones.
+    const backdrop = surface.querySelector('#surfaceBackdrop');
+    backdrop?.addEventListener('click', () => { if (focusIdx !== -1) unfocus(); });
+
+    dismissBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      unfocus();
+    });
+
+    // After iframe interaction the iframe captures keyboard focus, so Esc/arrows
+    // don't reach the host. Reclaim focus the moment the cursor leaves the
+    // focused phone's screen area — invisible to the user, fixes Esc.
+    surface.addEventListener('mousemove', (e) => {
+      if (focusIdx === -1) return;
+      const ae = document.activeElement;
+      if (!ae || ae.tagName !== 'IFRAME') return;
+      const screen = phones[focusIdx]?.querySelector('.screen');
+      if (!screen) return;
+      const r = screen.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right
+                  && e.clientY >= r.top  && e.clientY <= r.bottom;
+      if (!inside) { try { window.focus(); ae.blur(); } catch (_) {} }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!surface.classList.contains('active')) return;
+      const a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
+      if (e.key >= '1' && e.key <= '4') {
+        e.preventDefault();
+        e.stopPropagation();
+        focus(parseInt(e.key, 10) - 1);
+      } else if (e.key === 'Escape') {
+        if (focusIdx !== -1) {
+          e.preventDefault();
+          e.stopPropagation();
+          unfocus();
+        }
+      } else if (focusIdx !== -1 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const n = e.key === 'ArrowRight'
+          ? (focusIdx + 1) % phones.length
+          : (focusIdx + phones.length - 1) % phones.length;
+        focus(n);
+      }
+    }, true);
+
+    new MutationObserver(() => {
+      if (!surface.classList.contains('active') && focusIdx !== -1) unfocus();
+    }).observe(surface, { attributes: true, attributeFilter: ['class'] });
+
+    window.addEventListener('resize', () => {
+      if (focusIdx !== -1) unfocus();
+    });
+  })();
+
+  // ---- Single-phone focus for every .brief-slide (slide 5 + slide 9).
+  // Each slide gets its own focus state machine wired to its own .demo-phone,
+  // .focus-backdrop, and .focus-dismiss. The "1" / Esc keybindings only fire
+  // for whichever slide is currently active.
+  document.querySelectorAll('.brief-slide').forEach((slide) => {
+    const phone = slide.querySelector('.demo-phone');
+    if (!phone) return;
+    const dismissBtn = slide.querySelector('.focus-dismiss');
+    const backdrop   = slide.querySelector('.focus-backdrop');
+    let focused = false;
+    let natural = null;
+
+    function apply() {
+      slide.classList.toggle('fx-spotlight', focused);
+      if (!focused) { phone.style.transform = ''; return; }
+      const slideRect = slide.getBoundingClientRect();
+      const r = natural;
+      const cx = slideRect.left + slideRect.width / 2;
+      const cy = slideRect.top + slideRect.height / 2;
+      const pcx = r.left + r.width / 2;
+      const pcy = r.top + r.height / 2;
+      const targetH = slideRect.height - 220;
+      const scale = Math.min(targetH / r.height, 1.45);
+      phone.style.transform = `translate(${cx - pcx}px, ${cy - pcy}px) scale(${scale})`;
+    }
+    function focus() {
+      if (!focused) natural = phone.getBoundingClientRect();
+      focused = true;
+      apply();
+    }
+    function unfocus() { focused = false; apply(); }
+
+    phone.addEventListener('click', (e) => {
+      if (focused && e.target.closest('.screen')) return;
+      if (focused) unfocus();
+      else focus();
+    });
+
+    backdrop?.addEventListener('click', () => { if (focused) unfocus(); });
+    dismissBtn?.addEventListener('click', (e) => { e.stopPropagation(); unfocus(); });
+
+    slide.addEventListener('mousemove', (e) => {
+      if (!focused) return;
+      const ae = document.activeElement;
+      if (!ae || ae.tagName !== 'IFRAME') return;
+      const screen = phone.querySelector('.screen');
+      if (!screen) return;
+      const r = screen.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right
+                  && e.clientY >= r.top  && e.clientY <= r.bottom;
+      if (!inside) { try { window.focus(); ae.blur(); } catch (_) {} }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!slide.classList.contains('active')) return;
+      const a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
+      if (e.key === '1') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (focused) unfocus(); else focus();
+      } else if (e.key === 'Escape' && focused) {
+        e.preventDefault();
+        e.stopPropagation();
+        unfocus();
+      }
+    }, true);
+
+    new MutationObserver(() => {
+      if (!slide.classList.contains('active') && focused) unfocus();
+    }).observe(slide, { attributes: true, attributeFilter: ['class'] });
+
+    window.addEventListener('resize', () => { if (focused) unfocus(); });
+  });
+
+  /* ====================================================================
+     MOBILE ONLY — convert live demo iframes to tap-to-open cards.
+     Live iframes do not size/scroll well in portrait, so on phones we
+     hide each iframe inside a .screen and drop in a tappable link card
+     that opens the real demo in a new tab. Desktop keeps the live
+     iframes + all their existing focus/zoom interaction untouched.
+     ==================================================================== */
+  (function () {
+    const isMobile = window.matchMedia(
+      '(max-width: 768px), (pointer: coarse) and (max-width: 1024px)'
+    ).matches;
+    if (!isMobile) return;
+
+    document.querySelectorAll('.screen iframe').forEach((iframe) => {
+      const screen = iframe.closest('.screen');
+      if (!screen) return;
+
+      const src = iframe.getAttribute('src') || '';
+      const label = iframe.getAttribute('title') || 'Live demo';
+
+      iframe.style.display = 'none';
+
+      const a = document.createElement('a');
+      a.className = 'm-open';
+      a.href = src;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.innerHTML =
+        '<span class="mo-label">' + label + '</span>' +
+        '<span class="mo-cta">Open live demo ↗</span>';
+      screen.appendChild(a);
+    });
+  })();
+</script>
+
+</body>
+</html>
