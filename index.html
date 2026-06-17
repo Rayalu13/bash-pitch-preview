@@ -2,8 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow">
+<script>
+  /* Mobile: this deck is a fixed landscape presentation. Rather than show the
+     "open on desktop" gate, render it at its designed width and let the phone
+     scale it to fit (faithful, no broken reflow; pinch-zoom enabled, best in
+     landscape). Runs before layout so the desktop media queries apply. */
+  (function () {
+    try {
+      var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      var minSide = Math.min(window.screen.width, window.screen.height);
+      if (minSide <= 820 || (coarse && minSide <= 1024)) {
+        var DESIGN = 1366;
+        var vp = document.querySelector('meta[name="viewport"]');
+        if (vp) vp.setAttribute('content',
+          'width=' + DESIGN + ', initial-scale=' + (minSide / DESIGN).toFixed(4) + ', user-scalable=yes');
+      }
+    } catch (e) {}
+  })();
+</script>
 <title>Bash - Investor Pitch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -3265,125 +3283,6 @@
   .milestone .ms-body em { font-style: italic; color: var(--ink); }
   .milestone .ms-body strong { color: var(--orange); font-weight: 600; }
 
-  /* ====================================================================
-     MOBILE — FULL PORTRAIT REFLOW (phones / small touch screens).
-     Everything below is mobile-only; desktop rendering is untouched.
-     This block sits after all desktop + the 1100px query, so it wins.
-     ==================================================================== */
-  @media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
-    /* 1 — never show the "open on desktop" gate; let the deck render */
-    .mobile-gate { display: none !important; }
-
-    /* 2 — each active slide scrolls vertically, no horizontal overflow,
-           content starts at the top and clears the fixed bottom nav */
-    html, body { overflow: hidden; }
-    .deck { height: 100vh; height: 100dvh; }
-    .slide {
-      padding: 18px 16px 92px !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      -webkit-overflow-scrolling: touch;
-      justify-content: flex-start !important;
-    }
-    /* title / act-break slides stay centred but get sane padding */
-    .title-slide { padding: 48px 20px 92px !important; justify-content: center !important; }
-
-    /* Masthead: allow wrap / shrink so it never overflows the viewport */
-    .masthead {
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-    }
-    .masthead .brand { height: 18px; }
-
-    /* Title slide visuals constrained to the viewport */
-    .title-slide .brand-big { width: min(70vw, 300px); margin-bottom: 28px; }
-    .title-slide .tagline { font-size: clamp(20px, 6vw, 28px); max-width: 22ch; }
-    .title-slide .meta { margin-top: 36px; }
-
-    /* Headlines: keep legible but never overflow a 380px screen */
-    .headline { font-size: clamp(34px, 11vw, 56px); margin-bottom: 22px; }
-    .dek { font-size: clamp(16px, 4.6vw, 20px); }
-    .surface-headline { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .surface-headline h1 { font-size: clamp(22px, 6.5vw, 30px); }
-
-    /* ---- Stack EVERY remaining multi-column grid to one column ----
-       (grids already stacked by the 1100px query are not repeated here) */
-    .tools-grid { grid-template-columns: 1fr; }
-    .surface-row { grid-template-columns: 1fr; }
-    .graph-stage { grid-template-columns: 1fr; row-gap: 22px; }
-    .graph-stage.with-squads { grid-template-columns: 1fr; row-gap: 22px; }
-    .pc-stats { grid-template-columns: 1fr; }
-    .fw-outputs { grid-template-columns: 1fr; }
-    .market-stage { grid-template-columns: 1fr; row-gap: 28px; }
-    .tsm-wrap { grid-template-columns: 1fr; row-gap: 18px; }
-    .field-stage { grid-template-columns: 1fr; row-gap: 24px; }
-    .model-stage { grid-template-columns: 1fr; row-gap: 18px; }
-    .era { min-height: 0; }
-    .va-labels { grid-template-columns: 1fr 1fr; }
-    .chain { grid-template-columns: 1fr; row-gap: 8px; }
-
-    /* Compact stat rows → 2-up so they stay scannable */
-    .biz-stats { grid-template-columns: 1fr 1fr; }
-    .biz-stat .bs-v { font-size: clamp(28px, 9vw, 40px); }
-
-    /* Small fixed two-col rows kept but allowed to shrink gracefully */
-    .agent-row { grid-template-columns: 56px 1fr; }
-
-    /* ---- Phone mockups: full column width, capped height, centred ---- */
-    .mini-phone,
-    .demo-phone,
-    .phone {
-      width: min(78vw, 320px) !important;
-      max-width: 100%;
-      height: auto !important;
-      max-height: 70vh;
-      aspect-ratio: 9 / 19;
-      margin: 0 auto;
-    }
-    .mini { align-items: center; }
-    .split-visual { display: flex !important; height: auto; }
-
-    /* ---- Bottom nav: touch-friendly; hide keyboard hint ---- */
-    .nav { bottom: 14px; right: 14px; gap: 12px; }
-    .nav button { width: 42px; height: 42px; }
-    .nav .counter { min-width: 44px; }
-    .hint { display: none !important; }
-
-    /* ---- iframe → tap-to-open card (iframes hidden by mobile JS) ---- */
-    .m-open {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: 8px;
-      width: 100%;
-      min-height: 160px;
-      height: 100%;
-      padding: 22px 18px;
-      border: 1px dashed var(--rule);
-      border-radius: inherit;
-      background: var(--paper-2);
-      color: var(--ink);
-      text-decoration: none;
-      font-family: var(--sans);
-    }
-    .m-open .mo-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--ink-2);
-    }
-    .m-open .mo-cta {
-      font-family: var(--display);
-      font-size: 16px;
-      color: var(--orange);
-    }
-  }
-
 </style>
 </head>
 <body>
@@ -4949,40 +4848,6 @@
 
     window.addEventListener('resize', () => { if (focused) unfocus(); });
   });
-
-  /* ====================================================================
-     MOBILE ONLY — convert live demo iframes to tap-to-open cards.
-     Live iframes do not size/scroll well in portrait, so on phones we
-     hide each iframe inside a .screen and drop in a tappable link card
-     that opens the real demo in a new tab. Desktop keeps the live
-     iframes + all their existing focus/zoom interaction untouched.
-     ==================================================================== */
-  (function () {
-    const isMobile = window.matchMedia(
-      '(max-width: 768px), (pointer: coarse) and (max-width: 1024px)'
-    ).matches;
-    if (!isMobile) return;
-
-    document.querySelectorAll('.screen iframe').forEach((iframe) => {
-      const screen = iframe.closest('.screen');
-      if (!screen) return;
-
-      const src = iframe.getAttribute('src') || '';
-      const label = iframe.getAttribute('title') || 'Live demo';
-
-      iframe.style.display = 'none';
-
-      const a = document.createElement('a');
-      a.className = 'm-open';
-      a.href = src;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.innerHTML =
-        '<span class="mo-label">' + label + '</span>' +
-        '<span class="mo-cta">Open live demo ↗</span>';
-      screen.appendChild(a);
-    });
-  })();
 </script>
 
 </body>
