@@ -16,8 +16,9 @@
       if (minSide <= 820 || (coarse && minSide <= 1024)) {
         var DESIGN = 1366;
         var vp = document.querySelector('meta[name="viewport"]');
-        if (vp) vp.setAttribute('content',
-          'width=' + DESIGN + ', initial-scale=' + (minSide / DESIGN).toFixed(4) + ', user-scalable=yes');
+        // width-only: let the browser fit 1366 to the screen itself (a manual
+        // initial-scale mis-fits on real iOS Safari and overflows horizontally).
+        if (vp) vp.setAttribute('content', 'width=' + DESIGN + ', user-scalable=yes');
         document.documentElement.classList.add('mfit');
       }
     } catch (e) {}
@@ -4272,13 +4273,13 @@
             <span class="tr-tag">SAM · Serviceable</span>
             <span class="tr-num">~15,000 <em>venues</em></span>
             <span class="tr-name">Premium social venues · top 8 metros</span>
-            <span class="tr-basis">Bottom-up from <em>state excise registers</em> · ₹36K/yr SaaS ARPU.</span>
+            <span class="tr-basis">Bottom-up from <em>state excise registers</em> · <em>~₹2L/yr blended ARPU</em> (SaaS + ticketing + brand + data).</span>
           </div>
           <div class="tsm-row r-som">
-            <span class="tr-tag">SOM · 24–36 months</span>
-            <span class="tr-num">₹8–15 Cr <em>ARR</em></span>
-            <span class="tr-name">The Hyderabad → Bengaluru wedge</span>
-            <span class="tr-basis">15–20% of HYD + BLR premium venues · <em>before consumer revenue</em>.</span>
+            <span class="tr-tag">SOM · 3–5 years</span>
+            <span class="tr-num">₹100+ Cr <em>ARR</em></span>
+            <span class="tr-name">Top metros · full revenue stack</span>
+            <span class="tr-basis">~4,500 venues at blended ARPU + consumer revenue · <em>~½ of SAM</em>.</span>
           </div>
         </div>
       </div>
