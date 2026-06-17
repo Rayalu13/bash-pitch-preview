@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=1366, user-scalable=yes" />
 <meta name="robots" content="noindex,nofollow">
 <script>
   /* Mobile: this deck is a fixed landscape presentation. Rather than show the
@@ -13,12 +13,11 @@
     try {
       var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
       var minSide = Math.min(window.screen.width, window.screen.height);
+      // phones / small touch screens get the vertical-scroll filmstrip. The
+      // viewport is a fixed design width set STATICALLY in <head> (above) so iOS
+      // fits it to the screen at first paint and keeps pinch-zoom — changing the
+      // viewport via JS after load does not re-fit on iOS Safari.
       if (minSide <= 820 || (coarse && minSide <= 1024)) {
-        var DESIGN = 1366;
-        var vp = document.querySelector('meta[name="viewport"]');
-        // width-only: let the browser fit 1366 to the screen itself (a manual
-        // initial-scale mis-fits on real iOS Safari and overflows horizontally).
-        if (vp) vp.setAttribute('content', 'width=' + DESIGN + ', user-scalable=yes');
         document.documentElement.classList.add('mfit');
       }
     } catch (e) {}
